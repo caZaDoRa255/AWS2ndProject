@@ -35,3 +35,8 @@ git merge feature/front
 새파일 만들기
 touch test.test
 
+
+uptodate 확인 방법
+
+git status
+
