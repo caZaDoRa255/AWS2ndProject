@@ -136,15 +136,15 @@ resource "null_resource" "install_harbor" {
     }
 
     inline = [
-      "sudo yum update -y",
-      "sudo amazon-linux-extras enable docker",
-      "sudo yum install -y docker git curl wget tar",
+      "sudo dnf update -y",
+      "sudo dnf install -y docker",
+      "sudo dnf install -y libxcrypt-compat || true",
       "sudo systemctl start docker",
       "sudo systemctl enable docker",
 
       "sudo curl -L https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose",
       "sudo chmod +x /usr/local/bin/docker-compose",
-      "sudo dnf install -y libxcrypt-compat || true",
+      
 
       "cd /opt",
       "sudo wget https://github.com/goharbor/harbor/releases/download/v2.10.0/harbor-online-installer-v2.10.0.tgz",
