@@ -124,6 +124,8 @@ C:\terraform\workspace\00_eks> terraform apply
 C:\terraform\workspace\00_eks> terraform destroy
 */
 
+#------------------------------------------- 매우 중요!#
+
 resource "null_resource" "install_harbor" {
   depends_on = [module.bastion_host]
 
@@ -161,4 +163,16 @@ resource "null_resource" "install_harbor" {
       "sudo ./install.sh"
     ]
   }
+}
+
+data "aws_route53_zone" "main" {
+  name = "moodlyharbor.click"  # 너의 도메인
+}
+
+resource "aws_route53_record" "bastion_record" {
+  zone_id = data.aws_route53_zone.main.zone_id
+  name    = "www.moodlyharbor.click"   # 서브도메인
+  type    = "A"
+  ttl     = 300
+  records = [module.bastion_host.public_ip]
 }
