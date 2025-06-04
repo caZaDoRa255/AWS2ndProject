@@ -1,5 +1,11 @@
+import "../style/Home.css";
+
 function Home() {
-    return <h1>🕸️ Welcome to the haunted Home</h1>
-  }
-  
-    export default Home
+  return (
+    <div className="home-container">
+      <h1>Moodly</h1>
+    </div>
+  );
+}
+
+export default Home;
