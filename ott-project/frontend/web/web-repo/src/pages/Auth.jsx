@@ -1,6 +1,6 @@
 import { useState } from "react";
 import "../style/Auth.css";
-
+import { useRive, useStateMachineInput, Layout, Fit, Alignment } from '@rive-app/react-canvas';
 
 function Card({ children, className }) {
   return <div className={`card ${className}`}>{children}</div>;
@@ -10,16 +10,35 @@ function CardContent({ children }) {
   return <div className="card-content">{children}</div>;
 }
 
-function Button({ children, className, ...props }) {
-  return (
-    <button className={`btn ${className}`} {...props}>
-      {children}
-    </button>
-  );
-}
-
 function Input({ className, ...props }) {
   return <input className={`input ${className}`} {...props} />;
+}
+
+function RiveLoginButton() {
+  const STATE_MACHINE_NAME = "State Machine 1";
+  const BOOLEAN_INPUT_NAME = "Boolean 1";
+
+  const { RiveComponent, rive } = useRive({
+    src: "/rive/button.riv",
+    autoplay: true,
+    stateMachines: STATE_MACHINE_NAME,
+    layout: new Layout({ fit: Fit.Contain, alignment: Alignment.Center }),
+  });
+
+  const booleanInput = useStateMachineInput(rive, STATE_MACHINE_NAME, BOOLEAN_INPUT_NAME);
+
+  const handleClick = () => {
+    if (booleanInput) {
+      booleanInput.value = !booleanInput.value;
+    }
+  };
+
+  return (
+    <div style={{ width: "350px", height: "150px" }} onClick={handleClick}>
+
+      <RiveComponent />
+    </div>
+  );
 }
 
 function LoginSignup() {
@@ -39,9 +58,7 @@ function LoginSignup() {
               {!isLogin && <Input type="text" placeholder="Username" />}
               <Input type="email" placeholder="Email" />
               <Input type="password" placeholder="Password" />
-              <Button type="submit">
-                {isLogin ? "Moodly 로그인" : "Moodly 회원가입"}
-              </Button>
+              <RiveLoginButton />
             </form>
 
             <p className="form-toggle">
