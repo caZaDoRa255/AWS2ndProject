@@ -8,7 +8,8 @@ spec:
   source:
     repoURL: https://github.com/caZaDoRa255/AWS2ndProject
     targetRevision: main
-    path: manifests/k8s  
+    path: ott-project/manifests/k8s
+    # 제가 path 고쳤어요 잘했죠?
   destination:
     server: https://kubernetes.default.svc
     namespace: frontend
