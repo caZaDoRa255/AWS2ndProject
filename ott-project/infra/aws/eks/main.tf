@@ -124,14 +124,16 @@ C:\terraform\workspace\00_eks> terraform apply
 C:\terraform\workspace\00_eks> terraform destroy
 */
 
+#------------------------------------------- 매우 중요!#
+
 resource "null_resource" "install_harbor" {
-  depends_on = [module.bastion_host]
+  depends_on = [resource.bastion-host]
 
   provisioner "remote-exec" {
     connection {
       type        = "ssh"
       user        = "ec2-user"
-      host        = module.bastion_host.public_ip
+      host        = resource.bastion-host.public_ip
       private_key = file("~/.ssh/kyes-key.pem")
     }
 
@@ -152,7 +154,7 @@ resource "null_resource" "install_harbor" {
       "cd harbor",
 
       "sudo cp harbor.yml.tmpl harbor.yml",
-      "sudo sed -i \"s/^hostname: .*/hostname: ${module.bastion_host.public_ip}/\" harbor.yml",
+      "sudo sed -i \"s/^hostname: .*/hostname: ${resource.bastion-host.public_ip}/\" harbor.yml",
       "sudo sed -i 's/^  port: 443/#  port: 443/' harbor.yml",
       "sudo sed -i 's/^https:/#https:/' harbor.yml",
       "sudo sed -i 's/^  certificate/#  certificate/' harbor.yml",
@@ -161,4 +163,16 @@ resource "null_resource" "install_harbor" {
       "sudo ./install.sh"
     ]
   }
+}
+
+data "aws_route53_zone" "main" {
+  name = "moodlyharbor.click"  # 너의 도메인
+}
+
+resource "aws_route53_record" "bastion_record" {
+  zone_id = data.aws_route53_zone.main.zone_id
+  name    = "www.moodlyharbor.click"   # 서브도메인
+  type    = "A"
+  ttl     = 300
+  records = [module.bastion_host.public_ip]
 }
