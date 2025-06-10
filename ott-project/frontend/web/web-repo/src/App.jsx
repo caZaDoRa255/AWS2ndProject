@@ -2,18 +2,35 @@ import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
 import './App.css'
 import Home from './pages/Home.jsx'
 import Auth from './pages/Auth.jsx'
+import Me from './pages/me.jsx'
 
 function App() {
   return (
     <BrowserRouter>
-      <div className="nav" style={{ padding: '1rem', background: '#222', color: 'white' }}>
-        <Link to="/home" style={{ marginRight: '1rem', color: 'lightgray' }}>Home</Link>
-        <Link to="/auth" style={{ color: 'lightgray' }}>Auth</Link>
+      <div className="App">
+          <div className="nav">
+              <div className="nav-left">
+                <Link to="/home">Moodly</Link>
+                <Link to="/chat">Chat</Link>
+              </div>
+
+              <div className="nav-right">
+                <Link to="/auth">Auth</Link>
+                <Link to="/me">Me</Link>
+                <input
+                  type="text"
+                  placeholder="검색..."
+                  className="search-input"
+                />
+            </div>
+          </div>
+
+        <Routes>
+          <Route path="/home" element={<Home />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/me" element={<Me />} />
+        </Routes>
       </div>
-      <Routes>
-        <Route path="/home" element={<Home />} />
-        <Route path="/auth" element={<Auth />} />
-      </Routes>
     </BrowserRouter>
   )
 }
