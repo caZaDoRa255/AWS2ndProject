@@ -1,6 +1,70 @@
 .home-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-  }
+  padding: 2rem;
+  color: #e0e0e0;
+}
+
+.content-row {
+  display: flex;
+  gap: 50px;
+  margin-top: 2rem;
+}
+
+.content-box {
+  background-color: #2a2a2a;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  min-width: 200px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.scroll-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #444;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  z-index: 1;
+  opacity: 0.8;
+}
+
+.scroll-button.left {
+  left: 0;
+}
+
+.scroll-button.right {
+  right: 0;
+}
+
+.scroll-button:hover {
+  background-color: #666;
+}
+
+.dropdown-detail {
+  margin-top: 1rem;
+  background-color: #1e1e1e;
+  padding: 1rem;
+  border-radius: 8px;
+  color: #ccc;
+  font-size: 0.9rem;
+  box-shadow: 0 0 8px rgba(0,0,0,0.3);
+  transition: all 0.3s ease;
+}
+
+.content-box {
+  flex: 0 0 auto;
+  background-color: #2a2a2a;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  min-width: 200px;
+  text-align: center;
+  font-weight: bold;
+  position: relative;
+  transition: all 0.3s ease;
+}

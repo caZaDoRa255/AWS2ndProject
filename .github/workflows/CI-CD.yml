@@ -20,7 +20,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build Docker image
-        run: docker build -t huntress255/team4:test ./ott-project/frontend/web/web-repo
+        run: docker build -t huntress255/team4:beta ./ott-project/frontend/web/web-repo
 
       - name: Push Docker image
-        run: docker push huntress255/team4:test
+        run: docker push huntress255/team4:beta
