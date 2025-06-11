@@ -1,0 +1,81 @@
+from fastapi import APIRouter, HTTPException, Response
+from app.models.user import UserCreate, UserLogin
+from app.auth.utils import (
+    hash_password, verify_password,
+    create_access_token, create_refresh_token
+)
+from datetime import timedelta
+from fastapi.responses import JSONResponse
+from app.auth import service as auth_service
+from app.models.user_profile import UserUpdate,UserProfile
+
+router = APIRouter(prefix="/auth", tags=["Auth"])
+
+# 임시 DB
+fake_users_db = {
+    "test@example.com": {
+        "email": "test@example.com",
+        "password_hash": hash_password("test1234"),  # 평문 비밀번호는 'test1234'
+        "nickname": "테스터"
+    }
+}
+
+@router.post("/signup")
+def signup(user: UserCreate):
+    if user.email in fake_users_db:
+        raise HTTPException(status_code=400, detail="이미 존재하는 이메일입니다.")
+    
+    hashed_pw = hash_password(user.password)
+    fake_users_db[user.email] = {
+        "email": user.email,
+        "password_hash": hashed_pw,
+        "nickname": user.nickname,
+    }
+    return {"msg": "회원가입 완료"}
+
+@router.post("/login")
+def login(user: UserLogin):
+    db_user = fake_users_db.get(user.email)
+
+    if not db_user:
+        raise HTTPException(status_code=401, detail="존재하지 않는 이메일입니다.")
+    if not verify_password(user.password, db_user["password_hash"]):
+        raise HTTPException(status_code=401, detail="비밀번호가 일치하지 않습니다.")
+
+    access_token = create_access_token(data={"sub": user.email})
+    refresh_token = create_refresh_token(data={"sub": user.email})
+
+    response = JSONResponse(content={"access_token": access_token, "token_type": "bearer"})
+
+    # Refresh Token을 HttpOnly 쿠키에 저장
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        max_age=30 * 24 * 60 * 60,  # 30일
+        expires=30 * 24 * 60 * 60,
+        path="/",
+        samesite="lax",  # 또는 "strict", 필요 시 "none"
+        secure=False     # ⚠️ HTTPS일 경우 True로 변경
+    )
+
+    return response
+
+# 유저 프로필 조회 
+@router.get("/me", response_model=UserProfile)
+def get_my_profile(user_id: int):
+    return auth_service.get_user_profile(user_id)
+
+# 유저 프로필 설정 변경
+@router.patch("/me", response_model_exclude_none=True)  #null이 안나오게하고싶은데 다시하기!!!
+def update_my_profile(user_id: int, update: UserUpdate):
+    return auth_service.update_user_profile(user_id, update)
+
+#개발환경 (localhost)
+# samesite="lax"
+# secure=False
+
+#운영환경 (도메인 + https)
+# samesite="None"
+# secure=True  # 꼭 True! 아니면 브라우저가 cross-site 쿠키 차단함
+
