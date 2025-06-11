@@ -3,10 +3,9 @@ kind: Service
 metadata:
   name: react-app-service
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: react-app
   ports:
     - port: 80
       targetPort: 80
-      nodePort: 30080  # 클러스터 외부 접속 가능 포트 (30000~32767)
