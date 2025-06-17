@@ -1,0 +1,85 @@
+/* 전체 화면 중앙 정렬 */
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #0f0f1a;
+  color: #ffffff;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding-top: 80px; /* nav 공간 확보 !!!!!!!*/
+}
+  
+  /* 카드 스타일 */
+  .card {
+    background-color: #1e1e2f;
+    border-radius: 1rem;
+    box-shadow: 0 0 20px rgba(128, 90, 213, 0.2);
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .card-content {
+    padding: 0.5rem;
+  }
+  
+  /* 제목 */
+  .login-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+  
+  /* 폼 래퍼 */
+  .form-wrapper {
+    background-color: #2a2a3b;
+    padding: 1.5rem;
+    border-radius: 1rem;
+  }
+  
+  /* 인풋 */
+  .input {
+    width: 100%;
+    padding: 0.5rem;
+    background-color: #3a3a4d;
+    color: white;
+    border: 1px solid #5a5a75;
+    border-radius: 0.75rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  
+  .input:focus {
+    border-color: #a78bfa;
+  }
+  
+  /* 버튼 */
+  .btn {
+    width: 100%;
+    background-color: #6b21a8;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.75rem;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+  }
+  
+  .btn:hover {
+    background-color: #7e22ce;
+  }
+  
+  /* 토글 텍스트 */
+  .form-toggle {
+    margin-top: 1rem;
+    text-align: center;
+    font-size: 0.875rem;
+  }
+  
+  .toggle-link {
+    color: #c084fc;
+    cursor: pointer;
+    text-decoration: underline;
+  }

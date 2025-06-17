@@ -1,0 +1,10 @@
+*.pem
+.env
+secrets/
+node_modules/
+__pycache__/
+*.log
+*.tfvars
+terraform.tfvars
+*.bak
+.aws/

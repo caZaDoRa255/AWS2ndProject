@@ -1,0 +1,10 @@
+repos:
+  - repo: https://github.com/awslabs/git-secrets
+    rev: master
+    hooks:
+      - id: git-secrets
+
+  - repo: https://github.com/zricethezav/truffleHog
+    rev: v3.0.5
+    hooks:
+      - id: truffleHog

@@ -1,0 +1,6 @@
+access_key     = "REPLACE_ME"
+secret_key     = "REPLACE_ME"
+eks_cluster_name = "ott-eks"
+role_name      = "BastionHostRole-ott-eks"
+aws_region     = "ap-northeast-2"
+profile_name   = "admin"
