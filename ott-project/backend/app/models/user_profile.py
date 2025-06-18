@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, List
 from app.models.subscription import Subscription
 from app.db.base import Base
 from sqlalchemy import Column, Integer, String, ForeignKey
@@ -31,11 +31,15 @@ class UserProfile(BaseModel):
     nickname: str    # 유지! (users.nickname 기준)
     language: Optional[str] = None
     subscription: Optional[Subscription] = None
+    preferences: List[str] = [] #선호도가 없을 경우에는 빈 배열로 반환됨
+
 
     class Config:
         orm_mode = True
 
+# 유저 프로필 수정 시에는 "수정할 항목만 보내면 된다"는 구조
 class UserUpdate(BaseModel):
     nickname: Optional[str] = None
     language: Optional[str] = None
+    preferences: Optional[List[str]] = None  
 

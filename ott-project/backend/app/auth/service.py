@@ -6,6 +6,7 @@ from datetime import date
 from app.models.user import User
 from app.models.user_profile import UserUpdate, UserProfile, UserProfileORM
 from app.models.subscription import SubscriptionPlan, Subscription
+from app.models.preference import UserPreference
 
 
 # ✅ 유저 프로필 조회
@@ -28,13 +29,18 @@ def get_user_profile(user_id: int, db: Session) -> UserProfile:
     else:  # 구독권이 없을 경우 "없음" 표시, 만료일 none이면 출력x
         subscription = Subscription(name="없음", expires_at=None)
 
+    # ✅ 선호도 조회 추가
+    preferences_query = db.query(UserPreference).filter(UserPreference.user_id == user_id).all()
+    preferences = [p.genre for p in preferences_query]
+
     # ✅ 사용자에게 돌려줄 최종 응답
     return UserProfile(
         id=user.id,
         email=user.email,
         nickname=user.nickname,
         language=profile.language,
-        subscription=subscription
+        subscription=subscription,
+        preferences=preferences
     )
 
 
@@ -61,6 +67,12 @@ def update_user_profile(user_id: int, update: UserUpdate, db: Session) -> UserPr
     if update.language not in (None, ""):
         profile.language = update.language
 
+    # ✅ 선호도 수정 (덮어쓰기 방식)
+    if update.preferences is not None:
+        db.query(UserPreference).filter_by(user_id=user_id).delete()
+        for genre in update.preferences:
+            db.add(UserPreference(user_id=user_id, genre=genre))
+
     try:
         db.commit()
         db.refresh(user)
@@ -82,12 +94,17 @@ def update_user_profile(user_id: int, update: UserUpdate, db: Session) -> UserPr
     else:
         subscription = Subscription(name="없음", expires_at=None)
 
+    # ✅ 선호도 재조회 (업데이트 결과 포함)
+    preferences_query = db.query(UserPreference).filter(UserPreference.user_id == user_id).all()
+    preferences = [p.genre for p in preferences_query]
+
     return UserProfile(
         id=user.id,
         email=user.email,
         nickname=user.nickname,
         language=profile.language,
-        subscription=subscription
+        subscription=subscription,
+        preferences=preferences
     )
 
 

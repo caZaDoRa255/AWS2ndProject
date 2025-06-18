@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from app.models.subscription import SubscriptionPlan, UserSubscription
-from sqlalchemy.orm import joinedload #테스트용
+# from sqlalchemy.orm import joinedload #테스트용
 
 # ✅ 유저 구독 저장
 def subscribe_user(db: Session, user_id: int, plan_id: int) -> UserSubscription:
@@ -34,8 +34,30 @@ def subscribe_user(db: Session, user_id: int, plan_id: int) -> UserSubscription:
     return subscription
 
 # ✅ 유저 구독 조회
+def get_user_subscription(db: Session, user_id: int):
+    sub = db.query(UserSubscription).join(SubscriptionPlan).filter(UserSubscription.user_id == user_id).order_by(UserSubscription.start_date.desc()).first()
+    if not sub:
+        return None
+
+    return {
+        "name": sub.subscription_plan.name,
+        "expires_at": sub.expires_at.date() if sub.expires_at else None
+    }
+# if sub.expires_at else None (안전한 조회)
+# expires_at이 None일 수 있으니까 .date() 호출 전에 체크하는 거고, 
+# 없어도 동작은 하지만 에러가 나면 디버깅하기 빡세서 이렇게 안정화함
+# 조회는 읽기-only 작업이기 때문에 commit이나 refresh가 필요 없어
+
+#테스트용(유저 구독 조회)
 # def get_user_subscription(db: Session, user_id: int):
-#     sub = db.query(UserSubscription).join(SubscriptionPlan).filter(UserSubscription.user_id == user_id).order_by(UserSubscription.start_date.desc()).first()
+#     sub = (
+#         db.query(UserSubscription)
+#         .options(joinedload(UserSubscription.subscription_plan))  # ✅ 이거 추가
+#         .filter(UserSubscription.user_id == user_id)
+#         .order_by(UserSubscription.start_date.desc())
+#         .first()
+#     )
+
 #     if not sub:
 #         return None
 
@@ -43,22 +65,3 @@ def subscribe_user(db: Session, user_id: int, plan_id: int) -> UserSubscription:
 #         "name": sub.subscription_plan.name,
 #         "expires_at": sub.expires_at.date()
 #     }
-# 조회는 읽기-only 작업이기 때문에 commit이나 refresh가 필요 없어
-
-#테스트용(유저 구독 조회)
-def get_user_subscription(db: Session, user_id: int):
-    sub = (
-        db.query(UserSubscription)
-        .options(joinedload(UserSubscription.subscription_plan))  # ✅ 이거 추가
-        .filter(UserSubscription.user_id == user_id)
-        .order_by(UserSubscription.start_date.desc())
-        .first()
-    )
-
-    if not sub:
-        return None
-
-    return {
-        "name": sub.subscription_plan.name,
-        "expires_at": sub.expires_at.date()
-    }
