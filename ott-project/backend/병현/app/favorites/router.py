@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from app.favorites import service
-from app.schemas.favorites import Favorite
+from app.models.favorites import FavoriteCreate
 from typing import List
 
 router = APIRouter(prefix="/favorites", tags=["Favorites"])
@@ -11,7 +11,7 @@ def get_current_user_id() -> int:
               # 나중에 실제 인증 연결 시 JWT에서 user_id 추출
               # 추후 JWT 연동 시 이 부분만 바꾸면 전체 API는 그대로 유지됨
 
-@router.post("/{content_id}", response_model=Favorite)
+@router.post("/{content_id}", response_model=FavoriteCreate)
 def add_favorite(content_id: int, user_id: int = Depends(get_current_user_id)):
     return service.add_favorite(user_id, content_id)
 
@@ -22,6 +22,6 @@ def delete_favorite(content_id: int, user_id: int = Depends(get_current_user_id)
         raise HTTPException(status_code=404, detail="Favorite not found")
     return {"detail": "Favorite removed"}
 
-@router.get("/", response_model=List[Favorite])
+@router.get("/", response_model=List[FavoriteCreate])
 def get_favorite_list(user_id: int = Depends(get_current_user_id)):
     return service.get_favorites(user_id)

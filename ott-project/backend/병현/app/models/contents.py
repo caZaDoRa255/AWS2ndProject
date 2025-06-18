@@ -1,6 +1,18 @@
 from pydantic import BaseModel
+from sqlalchemy import Column, Integer, String
+from app.db.base import Base
 
-class Content(BaseModel):
+# 🔸 SQLAlchemy: DB 테이블용
+class Content(Base):
+    __tablename__ = "contents"  # 실제 DB 테이블명
+    id = Column(Integer, primary_key=True)
+    title = Column(String(255), nullable=False)
+    description = Column(String(500))
+    category = Column(String(100))
+    year = Column(Integer)
+
+# 🔸 Pydantic: API 요청/응답 검증용
+class ContentCreate(BaseModel):
     id: int #필요하면 str로 바꾸면된다
     title: str
     description: str

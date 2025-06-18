@@ -1,64 +1,25 @@
 from typing import List, Optional
-from app.schemas.contents import Content
+from app.models.contents import Content
 from typing import List, Dict
-from app.db.models.contents import Content
-from app.db.session import SessionLocal
-from app.db.models.contents import Content as ContentORM
-from app.schemas.contents import Content as ContentSchema
 
 # 💡 지금은 더미 콘텐츠 데이터 사용 중 (나중에 DB로 교체 가능)
-# FAKE_CONTENT_DB = [
-#     Content(id=1, title="Inception", description="Dream within a dream", category="sf", year=2010),
-#     Content(id=2, title="Parasite", description="Social satire", category="drama", year=2019),
-#     Content(id=3, title="Interstellar", description="Space adventure", category="sf", year=2014),
-#     Content(id=4, title="The Glory", description="Revenge drama", category="drama", year=2023),
-#     Content(id=5, title="Everything Everywhere All at Once", description="Multiverse chaos", category="sf", year=2022),
-#     Content(id=6, title="The Social Network", description="Rise of Facebook", category="drama", year=2010),
-#     Content(id=7, title="Her", description="AI love story", category="sf", year=2013),
-#     Content(id=8, title="Whiplash", description="Obsessive ambition", category="drama", year=2014),
-#     Content(id=9, title="Dune", description="Desert power", category="sf", year=2021),
-#     Content(id=10, title="Chernobyl", description="Nuclear disaster", category="drama", year=2019),
-# ]
+FAKE_CONTENT_DB = [
+    Content(id=1, title="Inception", description="Dream within a dream", category="sf", year=2010),
+    Content(id=2, title="Parasite", description="Social satire", category="drama", year=2019),
+    Content(id=3, title="Interstellar", description="Space adventure", category="sf", year=2014),
+    Content(id=4, title="The Glory", description="Revenge drama", category="drama", year=2023),
+]
 
-
-
-
-def seed_fake_contents():
-    db = SessionLocal()
-
-    fake_contents = [
-        Content(id=1, title="Inception", description="Dream within a dream", category="sf", year=2010),
-        Content(id=2, title="Parasite", description="Social satire", category="drama", year=2019),
-        Content(id=3, title="Interstellar", description="Space adventure", category="sf", year=2014),
-        Content(id=4, title="The Glory", description="Revenge drama", category="drama", year=2023),
-        Content(id=5, title="Everything Everywhere All at Once", description="Multiverse chaos", category="sf", year=2022),
-        Content(id=6, title="The Social Network", description="Rise of Facebook", category="drama", year=2010),
-        Content(id=7, title="Her", description="AI love story", category="sf", year=2013),
-        Content(id=8, title="Whiplash", description="Obsessive ambition", category="drama", year=2014),
-        Content(id=9, title="Dune", description="Desert power", category="sf", year=2021),
-        Content(id=10, title="Chernobyl", description="Nuclear disaster", category="drama", year=2019),
-    ]
-
-    db.bulk_save_objects(fake_contents)
-    db.commit()
-    db.close()
-
-
-def get_all_contents(category: Optional[str] = None) -> List[ContentSchema]:
-    db: Session = SessionLocal()
-
+def get_all_contents(category: Optional[str] = None) -> List[Content]:
     if category:
-        contents = db.query(ContentORM).filter(ContentORM.category == category).all()
-    else:
-        contents = db.query(ContentORM).all()
+        return [content for content in FAKE_CONTENT_DB if content.category == category]
+    return FAKE_CONTENT_DB
 
-    return contents
-
-
-def get_content_by_id(content_id: int) -> Optional[ContentSchema]:
-    db: Session = SessionLocal()
-    content = db.query(ContentORM).filter(ContentORM.id == content_id).first()
-    return content
+def get_content_by_id(content_id: int) -> Optional[Content]:
+    for content in FAKE_CONTENT_DB:
+        if content.id == content_id:
+            return content
+    return None
 
 # 나중에 db로 교체 시 
 #  1.모델에 파일만들기: models/orm/content_orm.py 만들기 → SQLAlchemy ORM 클래스 정의

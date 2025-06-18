@@ -5,24 +5,17 @@ from app.favorites.router import router as favorites_router
 from app.stream.router import router as history_router
 from app.preferences.router import router as preferences_router
 from app.recommend.router import router as recommend_router
-
-
-#------------------
-from app.db.session import engine
-from app.db.models.user import User
-from app.db.base import Base
-
-app = FastAPI()
-
-# 실행 시 테이블 생성
-Base.metadata.create_all(bind=engine)
-
-
+from app.subscription.router import router as subscription_router
 from fastapi.middleware.cors import CORSMiddleware
+from app.presigned.router import router as upload_router
+
+
+
+
+
 
 app = FastAPI()
-
-# CORS 설정
+#병현 추가
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],  # Vite dev 서버 주소
@@ -32,12 +25,14 @@ app.add_middleware(
 )
 
 
+app.include_router(upload_router)
 app.include_router(auth_router)
 app.include_router(contents_router)
 app.include_router(favorites_router)
 app.include_router(history_router)
 app.include_router(preferences_router)
 app.include_router(recommend_router)
+app.include_router(subscription_router)
 
 # cd backend_vs
 # venv\Scripts\activate

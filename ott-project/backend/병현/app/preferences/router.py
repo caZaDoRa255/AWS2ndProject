@@ -1,7 +1,7 @@
 # app/preferences/router.py
 from fastapi import APIRouter
 from app.preferences import service
-from app.schemas.preference import Preference
+from app.models.preference import Preference
 
 router = APIRouter(prefix="/users", tags=["Preferences"])
 

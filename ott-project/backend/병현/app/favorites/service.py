@@ -1,5 +1,5 @@
 from typing import List
-from app.schemas.favorites import Favorite
+from app.models.favorites import Favorite
 
 # ✅ 임시 찜 저장소 (user_id → content_id 목록)
 FAVORITE_DB: dict[int, set[int]] = {}
@@ -25,4 +25,3 @@ def get_favorites(user_id: int) -> List[Favorite]:  #찜목록반환
 # 실제 서비스에선 → DB에 favorites 테이블로 대체될 예정
 # set()을 사용해서 중복 찜 방지
 # 반환값은 모두 Favorite 모델로 구성됨
-# CRD 있네요!

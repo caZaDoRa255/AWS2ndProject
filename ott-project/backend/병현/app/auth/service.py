@@ -1,162 +1,149 @@
 from fastapi import HTTPException
-from fastapi.responses import JSONResponse
-from app.schemas.user import UserCreate, UserLogin
-from app.schemas.user_profile import UserProfile, UserUpdate, Subscription
-from app.auth.utils import hash_password, verify_password, create_access_token, create_refresh_token
 from sqlalchemy.orm import Session
-from app.db.models.user import User
-from app.db.session import SessionLocal
-# 임시 DB
-# fake_users_db = {
-#     1: {
-#         "id": 1,
-#         "email": "test@example.com",
-#         "password_hash": hash_password("test1234"),
-#         "nickname": "테스터",
-#         "language": "ko",
-#         "name": "프리미엄",
-#         "expires_at": "2025-06-30"
-#     }
-# }
+from sqlalchemy.exc import SQLAlchemyError
+from datetime import date
 
-def signup(user: UserCreate):
-    db: Session = SessionLocal()
+from app.models.user import User
+from app.models.user_profile import UserUpdate, UserProfile, UserProfileORM
+from app.models.subscription import SubscriptionPlan, Subscription
 
-    # 이메일 중복 확인
-    existing_user = db.query(User).filter(User.email == user.email).first()
-    if existing_user:
-        raise HTTPException(status_code=400, detail="이미 존재하는 이메일입니다.")
+from fastapi import Request
+from app.core.config import ALGORITHM, SECRET_KEY
+from jose import jwt, JWTError
 
-    # 비밀번호 해싱 후 User 객체 생성
-    hashed_pw = hash_password(user.password)
-    new_user = User(
+# ✅ 유저 프로필 조회
+def get_user_profile(user_id: int, db: Session) -> UserProfile:
+    user = db.query(User).filter(User.id == user_id).first()
+    profile = db.query(UserProfileORM).filter(UserProfileORM.id == user_id).first()
+
+    if not user or not profile:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # ✅ 구독권 정보 불러오기
+    subscription = None
+    if profile.subscription_id:
+        sub = db.query(SubscriptionPlan).filter(SubscriptionPlan.id == profile.subscription_id).first()
+        if sub:
+            subscription = Subscription(
+                name=sub.name,
+                expires_at=date(2025, 6, 30)  # ⛔️ 임시값 (UserSubscription 연동 예정)
+            )
+    else:  # 구독권이 없을 경우 "없음" 표시, 만료일 none이면 출력x
+        subscription = Subscription(name="없음", expires_at=None)
+
+    # ✅ 사용자에게 돌려줄 최종 응답
+    return UserProfile(
+        id=user.id,
         email=user.email,
-        password_hash=hashed_pw,
-        nickname=user.nickname
+        nickname=user.nickname,
+        language=profile.language,
+        subscription=subscription
     )
 
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)  # 새로 생성된 user 객체 최신화 (id 포함)
 
-    return {"msg": "회원가입 완료", "user_id": new_user.id}
-#---------------------------
-
-def login(user: UserLogin):
-    db: Session = SessionLocal()
-
-    # 이메일로 사용자 조회
-    db_user = db.query(User).filter(User.email == user.email).first()
-    if not db_user:
-        raise HTTPException(status_code=401, detail="존재하지 않는 이메일입니다.")
-
-    # 비밀번호 검증
-    if not verify_password(user.password, db_user.password_hash):
-        raise HTTPException(status_code=401, detail="비밀번호가 일치하지 않습니다.")
-
-    # 토큰 발급
-    access_token = create_access_token(data={"sub": db_user.email})
-    refresh_token = create_refresh_token(data={"sub": db_user.email})
-
-    # 응답 구성 (Refresh Token은 HttpOnly 쿠키로 설정)
-    response = JSONResponse(content={"access_token": access_token, "token_type": "bearer"})
-    response.set_cookie(
-        key="refresh_token",
-        value=refresh_token,
-        httponly=True,
-        max_age=30 * 24 * 60 * 60,
-        expires=30 * 24 * 60 * 60,
-        path="/",
-        samesite="lax",
-        secure=False
-    )
-
-    return response
-
-def get_user(user_id: int):
-    db: Session = SessionLocal()
-
+# ✅ 유저 프로필 수정
+def update_user_profile(user_id: int, update: UserUpdate, db: Session) -> UserProfile:
     user = db.query(User).filter(User.id == user_id).first()
+    profile = db.query(UserProfileORM).filter(UserProfileORM.id == user_id).first()
 
-    if not user:
-        raise HTTPException(status_code=404, detail="해당 사용자를 찾을 수 없습니다.")
+    if not user or not profile:
+        raise HTTPException(status_code=404, detail="User not found")
 
-    return {
-        "id": user.id,
-        "email": user.email,
-        "nickname": user.nickname,
-        "created_at": user.created_at
-    }
+    # 🔒 닉네임 필수 항목 검사
+    if update.nickname in (None, ""):
+        raise HTTPException(status_code=400, detail="닉네임은 필수 항목입니다.")
 
-
-def delete_user(user_id: int):
-    db: Session = SessionLocal()
-    user = db.query(User).filter(User.id == user_id).first()
-
-    if not user:
-        raise HTTPException(status_code=404, detail="해당 사용자를 찾을 수 없습니다.")
-
-    db.delete(user)
-    db.commit()
-
-    return {"msg": "사용자가 삭제되었습니다."}
-
-
-def update_user(user_id: int, update: UserUpdate):
-    db: Session = SessionLocal()
-    user = db.query(User).filter(User.id == user_id).first()
-
-    if not user:
-        raise HTTPException(status_code=404, detail="해당 사용자를 찾을 수 없습니다.")
-
-    # 이메일 변경 시 중복 검사
-    if update.email and update.email != user.email:
-        existing_user = db.query(User).filter(User.email == update.email).first()
-        if existing_user:
-            raise HTTPException(status_code=400, detail="이미 사용 중인 이메일입니다.")
-        user.email = update.email
-
-    # 비밀번호 해싱 후 저장
-    if update.password:
-        user.password_hash = hash_password(update.password)
-
-    if update.nickname:
+    # 🔁 닉네임 중복 확인
+    if update.nickname not in (None, ""):
+        existing = db.query(User).filter(User.nickname == update.nickname, User.id != user_id).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="이미 사용 중인 닉네임입니다.")
         user.nickname = update.nickname
 
-    db.commit()
-    db.refresh(user)
+    # 🌐 언어 수정 (빈 값이면 무시)
+    if update.language not in (None, ""):
+        profile.language = update.language
 
-    return {
-        "msg": "사용자 정보가 수정되었습니다.",
-        "id": user.id,
-        "email": user.email,
-        "nickname": user.nickname
-    }
+    try:
+        db.commit()
+        db.refresh(user)
+        db.refresh(profile)
+    except SQLAlchemyError as e:
+        db.rollback()
+        print("프로필 업데이트 중 오류:", str(e))
+        raise HTTPException(status_code=500, detail="프로필 업데이트 실패")
 
-############################################################################################
-def get_user_profile(user_id: int) -> UserProfile:
-    # 여기선 user_id를 이메일로 바꿔야 할 수도 있어. 예시용으로 둠
-    user = fake_users_db.get(user_id)
-    if not user:
-        raise ValueError("User not found")
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    # ✅ 구독권 정보 다시 조회
+    subscription = None
+    if profile.subscription_id:
+        sub = db.query(SubscriptionPlan).filter(SubscriptionPlan.id == profile.subscription_id).first()
+        if sub:
+            subscription = Subscription(
+                name=sub.name,
+                expires_at=date(2025, 6, 30)
+            )
+    else:
+        subscription = Subscription(name="없음", expires_at=None)
 
-    # 임시 이용권 정보
-    subscription = Subscription(
-        name= "프리미엄",
-        expires_at= "2025-06-30"
+    return UserProfile(
+        id=user.id,
+        email=user.email,
+        nickname=user.nickname,
+        language=profile.language,
+        subscription=subscription
     )
-    return UserProfile(**user,subscription=subscription)
 
-def update_user_profile(user_id: int, update_data: UserUpdate) -> UserProfile:
-    user = fake_users_db.get(user_id)  # 마찬가지로 이메일 기반으로 수정할 수 있음
-    if not user:
+
+def delete_user(user_id: int, db: Session) -> dict:
+    user = db.query(User).filter(User.id == user_id).first()
+    profile = db.query(UserProfileORM).filter(UserProfileORM.id == user_id).first()
+
+    if not user or not profile:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if update_data.nickname:
-        user["nickname"] = update_data.nickname
-    if update_data.language:
-        user["language"] = update_data.language
+    try:
+        db.delete(profile)
+        db.delete(user)
+        db.commit()
+    except SQLAlchemyError as e:
+        db.rollback()
+        print("삭제 중 오류:", str(e))
+        raise HTTPException(status_code=500, detail="사용자 삭제 실패")
 
-    return UserProfile(**user)
+    return {"detail": "사용자 계정과 프로필이 삭제되었습니다."}
+
+
+
+# ✅ 회원가입 시 UserProfile도 생성
+def create_user_with_profile(user: User, db: Session, language: str = "kor"):
+    try:
+        new_profile = UserProfileORM(
+            id=user.id,
+            email=user.email,
+            language=language
+        )
+        db.add(new_profile)
+        db.commit()
+    except SQLAlchemyError as e:
+        db.rollback()   #에러 나면 DB 작업 전부 되돌림
+        print("회원가입 중 에러 발생:", str(e))
+        raise HTTPException(status_code=500, detail="프로필 생성 중 오류가 발생했습니다.")
+# 예: 회원가입 시 유저테이블,유저프로필테이블에 같이 저장되는데 오류나서 유저테이블만 저장됨
+# 롤백하면 유저,유저프로필테이블 모두 저장되지않음
+# 롤백? "트랜잭션 도중 문제가 생겼을 때, 이미 진행된 DB 변경 내용을 되돌리는 작업"
+
+# 토큰을 id로 디코딩하는 로직. 병현 추가.
+def get_user_id_from_cookie(request: Request) -> int:
+    token = request.cookies.get("access_token")
+    ## 임시 코드 토큰 강제 주입함. 쿠키를 브라우저에서 가지고 오는건 프론트에서만 가능하다.
+    # token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3IiwiZXhwIjoxNzQ5OTA1MDE0fQ.TnKsT35Ps8lFqcxTIpNqrNwv4Kk5ZUZvAbbxWQnzpV0"
+    if not token:
+        raise HTTPException(status_code=401, detail="로그인 정보가 없습니다.")
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="토큰에 사용자 정보가 없습니다.")
+        return int(user_id)
+    except JWTError:
+        raise HTTPException(status_code=401, detail="유효하지 않은 토큰입니다.")

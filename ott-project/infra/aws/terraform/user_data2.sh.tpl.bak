@@ -1,0 +1,107 @@
+#!/bin/bash
+
+# ✅ 환경 변수 설정
+AWS_REGION="ap-northeast-2"
+CLUSTER_NAME="ott-eks"
+ACCOUNT_ID="979202697408"
+ROLE_NAME="AmazonEKS_AWSLoadBalancerControllerRole-${CLUSTER_NAME}"
+
+# Create bin directory
+sudo -u ec2-user mkdir -p /home/ec2-user/bin
+
+# Download kubectl
+curl -LO "https://dl.k8s.io/release/v1.27.4/bin/linux/amd64/kubectl"
+chmod +x kubectl
+mv kubectl /home/ec2-user/bin/kubectl
+chown ec2-user:ec2-user /home/ec2-user/bin/kubectl
+
+# 직접 PATH 설정 (bashrc 적용 기다릴 필요 없이)
+export PATH=/home/ec2-user/bin:$PATH
+
+# ✅ AWS CLI 설정 (admin 프로파일)
+sudo -u ec2-user aws configure set aws_access_key_id "${ACCESS_KEY}" --profile admin
+sudo -u ec2-user aws configure set aws_secret_access_key "${SECRET_KEY}" --profile admin
+sudo -u ec2-user aws configure set region $AWS_REGION --profile admin
+
+# ✅ kubeconfig 설정
+sudo -u ec2-user aws eks update-kubeconfig --region $AWS_REGION --name $CLUSTER_NAME --profile admin
+
+# ---------------------------------------
+# ✅ Argo CD 설치
+# ---------------------------------------
+sudo -u ec2-user /home/ec2-user/bin/kubectl create namespace argocd
+
+sudo -u ec2-user /home/ec2-user/bin/kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+# ✅ ArgoCD 서버 노출 (LoadBalancer)
+sudo -u ec2-user /home/ec2-user/bin/kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
+
+echo "🎉 Argo CD 설치 완료. 잠시 후 LoadBalancer 주소가 발급됩니다."
+
+# ---------------------------------------
+# ✅ Argo CD App: React Frontend 배포용
+# ---------------------------------------
+cat <<EOF > /home/ec2-user/ott-project-app.yml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: frontend
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/caZaDoRa255/AWS2ndProject
+    targetRevision: main
+    path: ott-project/manifests/k8s
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: frontend
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+EOF
+
+sudo -u ec2-user /home/ec2-user/bin/kubectl apply -f /home/ec2-user/ott-project-app.yml -n argocd
+
+# ---------------------------------------
+# ✅ Argo CD App: AWS Load Balancer Controller (Helm)
+# ---------------------------------------
+cat <<EOF > /home/ec2-user/alb-controller-app.yml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: aws-load-balancer-controller
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://aws.github.io/eks-charts
+    targetRevision: 1.13.2
+    chart: aws-load-balancer-controller
+    helm:
+      values: |
+        clusterName: ${CLUSTER_NAME}
+        serviceAccount:
+          create: true
+          name: aws-load-balancer-controller
+          annotations:
+            eks.amazonaws.com/role-arn: "arn:aws:iam::${ACCOUNT_ID}:role/${ROLE_NAME}"
+        image:
+          repository: 602401143452.dkr.ecr.ap-northeast-2.amazonaws.com/amazon/aws-load-balancer-controller
+        region: ${AWS_REGION}
+        watchNamespace: "" # 모든 네임스페이스 감시
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+EOF
+
+sudo -u ec2-user /home/ec2-user/bin/kubectl apply -f /home/ec2-user/alb-controller-app.yml -n argocd
+
+echo "🎉 AWS Load Balancer Controller Argo CD Application 설치 완료."

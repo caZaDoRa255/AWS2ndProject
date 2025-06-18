@@ -1,6 +1,6 @@
 # app/preferences/service.py
 from typing import Optional
-from app.schemas.preference import Preference
+from app.models.preference import Preference
 
 # ✅ 더미 DB: user_id → Preference
 PREFERENCE_DB: dict[int, Preference] = {}
