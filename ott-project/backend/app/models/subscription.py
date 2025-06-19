@@ -1,9 +1,32 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from datetime import datetime, date, timezone
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from app.db.base import Base  
 from sqlalchemy.orm import relationship #추가
+
+# 관리자용 이용권 등록 요청,응답
+class SubscriptionPlanCreate(BaseModel):
+    name: str
+    description: Optional[str] = ""
+    price: int
+    duration_days: int
+
+    # 공백 제거를 사전에 처리
+    @field_validator("name", "description", mode="before")
+    @classmethod
+    def strip_fields(cls, v):
+        return v.strip() if isinstance(v, str) else v
+
+class SubscriptionPlanResponse(BaseModel):
+    id: int
+    name: str
+    description: str
+    price: int
+    duration_days: int
+
+    class Config:
+        from_attributes = True
 
 # 🔹 1. 관리자용 DB 테이블 - 구독권 정의
 class SubscriptionPlan(Base):

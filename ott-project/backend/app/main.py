@@ -7,6 +7,7 @@ from app.preferences.router import router as preferences_router
 from app.recommend.router import router as recommend_router
 from app.subscription.router import router as subscription_router
 from app.click.router import router as click_router
+from app.admin.router import router as admin_router
 
 app = FastAPI()
 app.include_router(auth_router)
@@ -17,6 +18,7 @@ app.include_router(preferences_router)
 app.include_router(recommend_router)
 app.include_router(subscription_router)
 app.include_router(click_router)
+app.include_router(admin_router)
 
 # cd backend_vs
 # venv\Scripts\activate

@@ -20,21 +20,23 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 # 🔐 JWT 토큰 발급
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None): #하루만 사용
     expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode = data.copy()
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-def create_refresh_token(data: dict):
+def create_refresh_token(data: dict): #30일로 자동연장
     expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     to_encode = data.copy()
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-# 🔐 토큰 추출용 OAuth2 의존성, 로그인된 유저 가져오기
+# 🔐 토큰 추출용 OAuth2 의존성, 로그인된 유저 가져오기 테스트용
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")  
+# 	Swagger UI에만 영향 있음 (테스트 편의용)
 
+# 토큰으로 사용자 인증
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])

@@ -1,6 +1,18 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from sqlalchemy import Column, Integer, String
 from app.db.base import Base
+
+# 운영자 콘텐츠 등록 후 반환하는 응답 모델
+class ContentResponse(BaseModel):
+    id: int
+    title: str
+    description: str
+    category: str
+    year: int
+
+    class Config:
+        from_attributes = True
+
 
 # 🔸 SQLAlchemy: DB 테이블용, = DB 객체
 class Content(Base):
@@ -13,12 +25,19 @@ class Content(Base):
 
 # 🔸 Pydantic: API 요청/응답 검증용, = API에 주고받는 JSON 구조
 class ContentCreate(BaseModel):
-    id: int #필요하면 str로 바꾸면된다
+    # id: int #필요하면 str로 바꾸면된다
     title: str
     description: str
     category: str
     year: int
     # image_url: str = ""  # ✅ 테스트용 기본값 (DB에는 없어도 됨) -없어도됨
+
+    #  필드 공백 제거(여기서 해주는게 유지보수 쉬움)
+    @field_validator("title", "description", "category", mode="before")
+    # 숫자 필드(year)는 공백 입력 자체가 불가능하므로 제외
+    @classmethod
+    def strip_whitespace(cls, v: str) -> str:
+        return v.strip() if isinstance(v, str) else v
 
     class Config:
         from_attributes = True  # ✅ Pydantic v2에서 ORM 모델 받아들이게 함
