@@ -1,16 +1,24 @@
-# app/preferences/service.py
+from sqlalchemy.orm import Session
+from app.models.preference import Preference  # Pydantic 모델
+from app.models.preference import UserPreference     # SQLAlchemy 모델
 from typing import Optional
-from app.models.preference import Preference
 
-# ✅ 더미 DB: user_id → Preference
-PREFERENCE_DB: dict[int, Preference] = {}
+# 🔸 선호도 저장 (덮어쓰기)
+def save_preference(db: Session, user_id: int, genres: list[str]) -> Preference:
+    # 기존 선호도 모두 삭제
+    db.query(UserPreference).filter_by(user_id=user_id).delete()
 
-def save_preference(user_id: int, genres: list[str]) -> Preference:
-    pref = Preference(user_id=user_id, genres=genres)
-    PREFERENCE_DB[user_id] = pref
-    return pref
+    # 새로운 장르 저장
+    for genre in genres:
+        db.add(UserPreference(user_id=user_id, genre=genre))
 
-def get_preference(user_id: int) -> Optional[Preference]:
-    return PREFERENCE_DB.get(user_id)
+    db.commit()
+    return Preference(user_id=user_id, genres=genres)
 
-#회원가입 선호장르 선택하는 부분에 '없음'항목도 만들기
+# 🔸 선호도 조회
+def get_preference(db: Session, user_id: int) -> Optional[Preference]:
+    result = db.query(UserPreference).filter_by(user_id=user_id).all()
+    genres = [row.genre for row in result]
+    return Preference(user_id=user_id, genres=genres) if genres else None
+
+

@@ -9,6 +9,8 @@ class Favorite(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     content_id = Column(Integer, ForeignKey("contents.id"), nullable=False)
 
+    # primary_key는 단순히 "null 방지용"이 아니라 유일성 보장 + 자동 증가까지 도와주는 핵심 키
+
     # Column : DB 테이블의 하나의 "열(컬럼)"을 정의 (이게 실제로 CREATE TABLE에서 column_name)
     # Integer : 해당 컬럼의 데이터 타입이 "정수"라는 뜻 (String, Boolean, DateTime 등 다른 타입들도 있음)
     # ForeignKey : 외래 키 제약조건(FK)**을 설정할 때 씀, 
@@ -18,6 +20,8 @@ class Favorite(Base):
 class FavoriteCreate(BaseModel):
     user_id: int  #내부에서 쓰는 DB의 고유번호
     content_id: int
+    title: str
+    image_url: str  # 썸네일 이미지 URL, 찜 응답에 필요하니 꼭 있어야 함
 
     class Config:
-        orm_mode = True
+        from_attributes = True
