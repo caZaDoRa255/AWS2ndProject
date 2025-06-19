@@ -8,7 +8,7 @@ resource "null_resource" "install_harbor" {
       type        = "ssh"
       user        = "ec2-user"
       host        = aws_instance.bastion.public_ip
-      private_key = file("~/.ssh/kyes-key.pem")# 실제 사용중인 키 경로로 변경
+      private_key = file("~/.ssh/team4-key.pem")# 실제 사용중인 키 경로로 변경
     }
 
     inline = [
@@ -45,7 +45,7 @@ resource "null_resource" "install_harbor" {
 # Route53 도메인
 
 data "aws_route53_zone" "main" {
-  name = "moodlyharbor.click"
+  name = "moodlyharbor.click."
 }
 
 # resource "aws_route53_record" "bastion_record" {
