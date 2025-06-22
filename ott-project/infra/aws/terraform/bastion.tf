@@ -48,7 +48,7 @@ resource "aws_instance" "bastion" {
   vpc_security_group_ids      = [aws_security_group.bastion_sg.id]
   associate_public_ip_address = true
   iam_instance_profile = aws_iam_instance_profile.bastion_instance_profile.name # 이 줄 추가
-  key_name                    = "kyes-key" # 실제 EC2 키페어 이름으로 교체
+  key_name                    = "team4-key" # 실제 EC2 키페어 이름으로 교체
 
   metadata_options {
     http_tokens = "optional"
