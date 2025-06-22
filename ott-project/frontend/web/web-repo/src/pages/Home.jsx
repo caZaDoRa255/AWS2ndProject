@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import "../style/Home.css";
-
+import backgroundImage from "../assets/프론트 배경.png";
 function Home() {
   const [contents, setContents] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(null);
@@ -39,6 +39,9 @@ function Home() {
   return (
     <div className="home-container">
       <h1>Moodly</h1>
+      <div className="home-banner">
+      <img src={backgroundImage} alt="Moodly 배경" className="banner-image" />
+      </div>
       <div className="scroll-container">
         <button className="scroll-button left" onClick={scrollLeft}>←</button>
         <div className="content-row" ref={scrollRef}>

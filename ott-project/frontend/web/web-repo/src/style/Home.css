@@ -68,3 +68,17 @@
   position: relative;
   transition: all 0.3s ease;
 }
+
+.home-banner {
+  width: 100vw;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.banner-image {
+  width: 90vw;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
