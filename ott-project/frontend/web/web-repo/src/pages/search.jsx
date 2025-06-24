@@ -1,18 +1,19 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import "../style/search.css";
-
+import { useNavigate } from "react-router-dom";
 
 function Search() {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const location = useLocation();
-
+  const navigate = useNavigate();
   // URL 쿼리에서 keyword 추출
   const query = new URLSearchParams(location.search);
   const keyword = query.get('keyword');
 
   useEffect(() => {
+    
     const fetchResults = async () => {
       try {
         const response = await fetch(`http://localhost:8000/contents/search?keyword=${encodeURIComponent(keyword)}`);
@@ -44,7 +45,12 @@ function Search() {
       ) : results.length > 0 ? (
             <ul className="search-result-list">
                 {results.map((item, index) => (
-                    <li key={index} className="search-result-item">
+                    <li 
+                    key={index} 
+                    className="search-result-item"
+                    onClick={() => navigate(`/content/${item.id}`)}
+                    style={{ cursor: "pointer" }}
+                    >
                     <div className="content-info">
                         <div className="title">{item.title}</div>
                         <div className="meta">

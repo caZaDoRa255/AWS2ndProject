@@ -1,4 +1,5 @@
-import { Routes, Route, Link, useNavigate } from 'react-router-dom'
+import {Routes, Route, Link, useNavigate } from 'react-router-dom'
+
 import { useState } from 'react'
 import './App.css'
 import Home from './pages/Home.jsx'
@@ -9,6 +10,8 @@ import Upload from './pages/upload.jsx'
 import Stream from './pages/stream.jsx'
 import Search from './pages/search.jsx'; // search.jsx import 추가
 import ContentDetail from './pages/contentDetail.jsx'
+import AdminLogin from './pages/admin/adminLogin.jsx'
+import AdminDashboard from './pages/admin/adminDashboard.jsx'
 
 function App() {
   const navigate = useNavigate();
@@ -53,7 +56,10 @@ function App() {
         <Route path="/upload" element={<Upload />} />
         <Route path="/stream" element={<Stream />} />
         <Route path="/search" element={<Search />} />
-        <Route path="/contentDetail" element={<ContentDetail />} />
+        
+        <Route path="/content/:id" element={<ContentDetail />} />
+        <Route path="/admin" element={<AdminLogin />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
       </Routes>
     </div>
   );

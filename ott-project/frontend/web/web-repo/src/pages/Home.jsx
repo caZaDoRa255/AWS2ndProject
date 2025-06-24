@@ -1,17 +1,21 @@
 import { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import "../style/Home.css";
 import backgroundImage from "../assets/프론트 배경.png";
+
 function Home() {
   const [contents, setContents] = useState([]);
-  const [selectedIndex, setSelectedIndex] = useState(null);
   const scrollRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchContents = async () => {
       try {
         const res = await fetch("http://localhost:8000/contents/");
+        
         const data = await res.json();
-        setContents(data.slice(0, 10));
+        console.log("서버에서 받은 콘텐츠:", data); // 🔥 이 줄 추가
+        setContents(data.slice(0, 5));
       } catch (error) {
         console.error("콘텐츠 불러오기 실패:", error);
       }
@@ -28,48 +32,28 @@ function Home() {
     scrollRef.current?.scrollBy({ left: 300, behavior: "smooth" });
   };
 
-  const handleBoxClick = (index) => {
-    setSelectedIndex(index === selectedIndex ? null : index);
-  };
-
-  const handleLike = (title) => {
-    alert(`'${title}' 찜 완료!`);
+  const goToDetail = (id) => {
+    navigate(`/content/${id}`);
   };
 
   return (
     <div className="home-container">
       <h1>Moodly</h1>
+
       <div className="home-banner">
-      <img src={backgroundImage} alt="Moodly 배경" className="banner-image" />
+        <img src={backgroundImage} alt="Moodly 배경" className="banner-image" />
       </div>
+
       <div className="scroll-container">
         <button className="scroll-button left" onClick={scrollLeft}>←</button>
         <div className="content-row" ref={scrollRef}>
-          {contents.map((item, index) => (
+          {contents.map((item) => (
             <div
-              key={index}
+              key={item.id}
               className="content-box"
-              onClick={() => handleBoxClick(index)}
+              onClick={() => goToDetail(item.id)}
             >
               {item.title}
-
-              {selectedIndex === index && (
-                <div className="dropdown-detail" onClick={(e) => e.stopPropagation()}>
-                  <p><strong>ID:</strong> {item.id}</p>
-                  <p><strong>Category:</strong> {item.category}</p>
-                  <p><strong>Year:</strong> {item.year}</p>
-                  <p><strong>Description:</strong> {item.description}</p>
-                  <button
-                    className="like-button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleLike(item.title);
-                    }}
-                  >
-                    ❤️ 찜하기
-                  </button>
-                </div>
-              )}
             </div>
           ))}
         </div>

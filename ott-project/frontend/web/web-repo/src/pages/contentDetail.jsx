@@ -1,39 +1,32 @@
-import "../style/contentDetail.css";
+import { useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 function ContentDetail() {
+  const { id } = useParams();
+  const [content, setContent] = useState(null);
+
+  useEffect(() => {
+    fetch(`http://localhost:8000/contents/${id}`)
+      .then(res => res.json())
+      .then(data => setContent(data))
+      .catch(err => console.error("불러오기 실패:", err));
+  }, [id]);
+
+  if (!content) return <div>로딩 중...</div>;
+
   return (
-    <div className="content-detail-container">
-      <div className="content-info">
-        <img src="/images/파괴로고.png" alt="Title Logo" className="title-logo" />
-        <p className="info-line">🔞 2024 • 2시간 2분 • 액션 • 성장</p>
-        <p className="description">
-          40여 년간 감정 없이 바퀴벌레 같은 인간들을 방역해 온 60대 킬러 조각.
-          그리고 평생 조각을 쫓은...
-          <span className="more">더보기</span>
-        </p>
-        <div className="rating-box">
-          <span className="star">★</span>
-          <span className="rating">3.2</span>
-          <span className="label">평균 별점</span>
-        </div>
-
-        <div className="button-row">
-          <button className="buy-btn">📺 구매하기</button>
-          <button className="gift-btn">🎁 선물하기</button>
-        </div>
-
-        <div className="action-row">
-          <div className="action-item">+ 찜하기</div>
-          <div className="action-item">★ 평가하기</div>
-          <div className="action-item">🗨 왓챠파티</div>
-          <div className="action-item">⋯ 더보기</div>
-        </div>
-      </div>
-
-      <div className="content-thumbnail">
-        <img src="/images/파괴장면.png" alt="Thumbnail" />
-        <button className="preview-btn">미리보기 &gt;</button>
-      </div>
+    <div className="detail-page">
+      <h1>{content.title}</h1>
+      <p><strong>설명:</strong> {content.description}</p>
+      <p><strong>카테고리:</strong> {content.category}</p>
+      <p><strong>연도:</strong> {content.year}</p>
+      {/* 여기다 이미지, 버튼, 평점 등 추가 */}
+      <button
+          className="like-button"
+          onClick={() => alert(`id ${content.id}번 찜함`)}
+        >
+          ❤️ 찜하기
+        </button>
     </div>
   );
 }

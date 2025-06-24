@@ -1,0 +1,109 @@
+.content-detail-container {
+  display: flex;
+  justify-content: space-between;
+  background-color: #0d0d0d;
+  color: white;
+  padding: 40px;
+  gap: 40px;
+}
+
+.content-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.title-logo {
+  width: 180px;
+  margin-bottom: 20px;
+}
+
+.info-line {
+  font-size: 16px;
+  opacity: 0.8;
+  margin-bottom: 12px;
+}
+
+.description {
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  opacity: 0.9;
+}
+
+.more {
+  color: #aaa;
+  cursor: pointer;
+  margin-left: 6px;
+}
+
+.rating-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 24px;
+}
+
+.rating-box .star {
+  color: #facc15;
+}
+
+.rating-box .label {
+  font-size: 14px;
+  font-weight: normal;
+  opacity: 0.7;
+}
+
+.button-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.buy-btn,
+.gift-btn {
+  padding: 10px 20px;
+  background-color: #f43f5e;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.action-row {
+  display: flex;
+  gap: 24px;
+  font-size: 14px;
+  opacity: 0.8;
+  margin-top: 16px;
+}
+
+.action-item {
+  cursor: pointer;
+}
+
+.content-thumbnail {
+  flex: 1.2;
+  position: relative;
+}
+
+.content-thumbnail img {
+  width: 100%;
+  border-radius: 8px;
+}
+
+.preview-btn {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background-color: rgba(0,0,0,0.6);
+  color: white;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+}
