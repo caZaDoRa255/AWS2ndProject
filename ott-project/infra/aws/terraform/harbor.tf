@@ -47,7 +47,7 @@ resource "null_resource" "install_harbor" {
 data "aws_route53_zone" "click" {
   name = "moodlyharbor.click"
   private_zone = false
-  zone_id      = "Z0164052F6B35Z3Z93KK" 
+  zone_id = "Z0164052F6B35Z3Z93KK"
 }
 
 # resource "aws_route53_record" "bastion_record" {
@@ -80,14 +80,13 @@ resource "aws_route53_record" "acm_validation_www" {
 }
 
 
-data "aws_route53_zone" "link" {
-  name         = "moodlyharbor.link."
-  private_zone = false
-  zone_id = "Z01838952I49AEBISP278"
+data "aws_route53_zone" "harbor_link" {
+  zone_id = "Z0854242A863LNCHFSQJ"
+
 }
 
 resource "aws_route53_record" "harbor_record_link" {
-  zone_id = data.aws_route53_zone.link.zone_id
+  zone_id = data.aws_route53_zone.harbor_link.zone_id
   name    = "moodlyharbor.link."
   type    = "A"
 

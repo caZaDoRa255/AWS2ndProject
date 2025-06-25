@@ -1,9 +1,10 @@
 # dns.tf
-resource "aws_route53_zone" "main" {
-  name = "moodlyharbor.link"
+data "aws_route53_zone" "link" {
+  zone_id = "Z0854242A863LNCHFSQJ"
 }
+
 resource "aws_route53_record" "frontend" {
-  zone_id = aws_route53_zone.main.zone_id
+  zone_id = data.aws_route53_zone.link.zone_id
   name    = "frontend.moodlyharbor.link"
   type    = "A"
 
@@ -15,7 +16,7 @@ resource "aws_route53_record" "frontend" {
 }
 
 resource "aws_route53_record" "backend" {
-  zone_id = aws_route53_zone.main.zone_id
+  zone_id = data.aws_route53_zone.link.zone_id
   name    = "backend.moodlyharbor.link"
   type    = "A"
 

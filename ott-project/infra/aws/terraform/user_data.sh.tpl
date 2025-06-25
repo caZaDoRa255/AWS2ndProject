@@ -46,8 +46,7 @@ done
 echo "✅ Cluster is ACTIVE!"
 
 # kubeconfig 구성
-sudo -u ec2-user aws eks update-kubeconfig --region "${AWS_REGION}" --name "${CLUSTER_NAME}" --profile "${PROFILE_NAME}"
-
+sudo -u ec2-user aws eks update-kubeconfig --name "${CLUSTER_NAME}" 
 # ArgoCD 설치
 sudo -u ec2-user /home/ec2-user/bin/kubectl create namespace argocd
 sudo -u ec2-user /home/ec2-user/bin/kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml

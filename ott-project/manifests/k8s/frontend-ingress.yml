@@ -1,23 +1,27 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: react-app-ingress
+  name: frontend-ingress
   namespace: frontend
   annotations:
+    kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS": 443}]'
     alb.ingress.kubernetes.io/backend-protocol: HTTP
-    alb.ingress.kubernetes.io/group.name: react-group
+    alb.ingress.kubernetes.io/certificate-arn: #수정!
+    alb.ingress.kubernetes.io/group.name: moodly-frontend
+    alb.ingress.kubernetes.io/load-balancer-name: moodly-frontend-lb
 spec:
   ingressClassName: alb
   rules:
-    - http:
+    - host: frontend.moodlyharbor.link
+      http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: react-app-service
+                name: frontend-app-service
                 port:
                   number: 80
