@@ -274,56 +274,62 @@ resource "google_sql_database" "app_db" {
 # 필수 API 사용 설정 (권한 문제 해결을 위해 Artifact Registry 및 Cloud Run API 추가)
 
 resource "google_project_service" "api_gateway" {
-  project = var.project_id
-  service = "apigateway.googleapis.com"
+  project                    = var.project_id
+  service                    = "apigateway.googleapis.com"
+  disable_dependent_services = true # 추가
 }
 
 resource "google_project_service" "cloudfunctions" {
-  project = var.project_id
-  service = "cloudfunctions.googleapis.com"
+  project                    = var.project_id
+  service                    = "cloudfunctions.googleapis.com"
+  disable_dependent_services = true # 추가
 }
 
 resource "google_project_service" "cloudbuild" {
-  project = var.project_id
-  service = "cloudbuild.googleapis.com"
+  project                    = var.project_id
+  service                    = "cloudbuild.googleapis.com"
+  disable_dependent_services = true # 추가
 }
 
 resource "google_project_service" "storage" {
-  project = var.project_id
-  service = "storage.googleapis.com"
+  project                    = var.project_id
+  service                    = "storage.googleapis.com"
+  disable_dependent_services = true # 추가
 }
 
 resource "google_project_service" "eventarc" {
-  project = var.project_id
-  service = "eventarc.googleapis.com"
+  project                    = var.project_id
+  service                    = "eventarc.googleapis.com"
+  disable_dependent_services = true # 추가
 }
-
 
 resource "google_project_service" "pubsub" {
-  project = var.project_id
-  service = "pubsub.googleapis.com"
+  project                    = var.project_id
+  service                    = "pubsub.googleapis.com"
+  disable_dependent_services = true # 추가
 }
 
-# Artifact Registry API 활성화 
+# Artifact Registry API 활성화
 resource "google_project_service" "artifactregistry" {
-  project = var.project_id
-  service = "artifactregistry.googleapis.com"
+  project                    = var.project_id
+  service                    = "artifactregistry.googleapis.com"
+  disable_dependent_services = true # 추가
 }
 
-# Cloud Run API 활성화 
+# Cloud Run API 활성화
 resource "google_project_service" "cloudrun" {
-  project = var.project_id
-  service = "run.googleapis.com"
+  project                    = var.project_id
+  service                    = "run.googleapis.com"
+  disable_dependent_services = true # 추가
 }
 
 # IAM API 활성화 (서비스 계정 권한 관리를 위해)
 resource "google_project_service" "iam" {
-  project = var.project_id
-  service = "iam.googleapis.com"
-  disable_on_destroy = false
+  project            = var.project_id
+  service            = "iam.googleapis.com"
+  disable_dependent_services = true # 추가
+  
 }
-
-
 
 #---------------------------------------------------------
 # Cloud Build 서비스 계정에 필요한 권한 부여 (Cloud Functions 빌드 성공을 위해 추가)
@@ -433,6 +439,13 @@ resource "google_storage_bucket_object" "function_zip" {
   source = "${path.module}/function-source.zip"
 }
 
+# Cloud Functions 서비스 에이전트에 Artifact Registry Reader 권한 부여
+resource "google_project_iam_member" "cloud_functions_artifact_reader" {
+  project = "ott-project-462006" # 실제 프로젝트 ID로 변경하세요
+  role    = "roles/artifactregistry.reader"
+  member  = "serviceAccount:service-291577203787@gcf-admin-robot.iam.gserviceaccount.com" # <YOUR_PROJECT_NUMBER>를 실제 프로젝트 번호로 변경
+}
+
 resource "google_cloudfunctions2_function" "hello_function" {
   provider = google-beta
   name     = "hello-function"
@@ -473,7 +486,8 @@ resource "google_cloudfunctions2_function" "hello_function" {
       google_project_iam_member.cloud_build_sa_user,
       google_project_iam_member.cloud_build_run_admin,
       google_project_iam_member.functions_runtime_run_invoker,
-      google_project_iam_member.functions_runtime_run_developer
+      google_project_iam_member.functions_runtime_run_developer,
+      google_project_iam_member.cloud_functions_artifact_reader
   ]
 }
 
