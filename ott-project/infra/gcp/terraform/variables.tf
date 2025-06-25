@@ -28,7 +28,7 @@ variable "public_subnet_name" {
 
 variable "public_subnet_cidr" {
   type    = string
-  default = "10.0.1.0/24"
+  default = "10.10.1.0/24"
 }
 
 variable "vm_name" {
@@ -47,7 +47,7 @@ variable "private_subnet_name" {
 
 variable "private_subnet_cidr" {
   type    = string
-  default = "10.0.2.0/24"
+  default = "10.10.2.0/24"
 }
 
 variable "private_vm_name" {
@@ -75,3 +75,43 @@ variable "gke_service_account_email" {
   description = "클러스터 노드에 연결할 서비스 계정 이메일"
 }
 
+variable "gcp_region" {
+  description = "Region for GCP resources"
+  default     = "asia-northeast3"  
+}
+
+# AWS 쪽 Customer Gateway의 퍼블릭 IP
+variable "aws_customer_gateway_ip" {
+  description = "Customer Gateway IP from AWS side"
+  type        = string
+}
+
+# 양쪽이 공유하는 VPN 터널 비밀키
+variable "vpn_shared_secret" {
+  description = "Shared secret used for VPN tunnel between AWS and GCP"
+  type        = string
+}
+
+# GCP 서브넷 CIDR
+variable "gcp_private_subnet_cidr" {
+  description = "CIDR block of the GCP private subnet"
+  type        = string
+}
+
+# AWS 서브넷 CIDR (라우팅용)
+variable "aws_private_subnet_cidr" {
+  description = "CIDR block of the AWS private subnet to route to"
+  type        = string
+}
+
+
+variable "instance_name" {
+  default = "mydb"
+}
+variable "db_user" {
+  default = "admin"
+}
+variable "db_password" {}  # terraform.tfvars 또는 secret으로 주입
+variable "db_name" {
+  default = "app_db"
+}

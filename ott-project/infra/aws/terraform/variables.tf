@@ -57,3 +57,18 @@ variable "certificate_arn" {
   description = "ACM certificate ARN for HTTPS listener"
   type        = string
 }
+
+variable "environment" {
+  description = "Execution environment (local or shared)"
+  type        = string
+  default     = "local"
+}
+
+variable "gcp_private_subnet_cidr" {
+  description = "GCP VPC의 프라이빗 서브넷 CIDR 블록"
+  type        = string
+}
+
+
+
+

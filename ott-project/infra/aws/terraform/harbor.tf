@@ -44,8 +44,10 @@ resource "null_resource" "install_harbor" {
 
 # Route53 도메인
 
-data "aws_route53_zone" "main" {
-  name = "moodlyharbor.click."
+data "aws_route53_zone" "click" {
+  name = "moodlyharbor.click"
+  private_zone = false
+  zone_id      = "Z0164052F6B35Z3Z93KK" 
 }
 
 # resource "aws_route53_record" "bastion_record" {
@@ -56,9 +58,9 @@ data "aws_route53_zone" "main" {
 #   records = [aws_instance.bastion.public_ip]
 # }
 
-resource "aws_route53_record" "harbor_record" {
-  zone_id = data.aws_route53_zone.main.zone_id
-  name    = "www.moodlyharbor.click"
+resource "aws_route53_record" "harbor_record_click" {
+  zone_id = data.aws_route53_zone.click.zone_id
+  name    = "moodlyharbor.click."
   type    = "A"
 
   alias {
@@ -70,9 +72,31 @@ resource "aws_route53_record" "harbor_record" {
 # --> 나중에 이거 쓸것!
 
 resource "aws_route53_record" "acm_validation_www" {
-  zone_id = data.aws_route53_zone.main.zone_id
+  zone_id = data.aws_route53_zone.click.zone_id
   name    = "_49d655e3213f066f19075e2da006a057.www.moodlyharbor.click."
   type    = "CNAME"
   ttl     = 300
   records = ["_52feb0e3019f142da9ea357e567387f2.xlfgrmvvlj.acm-validations.aws."]
 }
+
+
+data "aws_route53_zone" "link" {
+  name         = "moodlyharbor.link."
+  private_zone = false
+  zone_id = "Z01838952I49AEBISP278"
+}
+
+resource "aws_route53_record" "harbor_record_link" {
+  zone_id = data.aws_route53_zone.link.zone_id
+  name    = "moodlyharbor.link."
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.harbor_alb.dns_name
+    zone_id                = aws_lb.harbor_alb.zone_id
+    evaluate_target_health = true
+  }
+}
+
+
+

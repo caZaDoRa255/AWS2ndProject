@@ -8,7 +8,7 @@ resource "aws_security_group" "rds_mysql_sg" {
     from_port   = 3306
     to_port     = 3306
     protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/16"] # var.cidr 대신 하드코딩 (확실하게)
+    cidr_blocks = ["0.0.0.0/0"] # var.cidr 대신 하드코딩 (확실하게)
   }
 
   egress {

@@ -1,10 +1,5 @@
 # irsa.tf (수정 후)
 
-# EKS Cluster Data Source (기존 EKS Cluster 정보를 가져오기 위함)
-data "aws_eks_cluster" "ott_eks" {
-  name = var.eks_cluster_name # 이미 수정하셨을 것으로 보입니다.
-}
-
 
 # 1. IAM Policy for AWS Load Balancer Controller
 resource "aws_iam_policy" "alb_controller_policy" {
@@ -22,12 +17,12 @@ resource "aws_iam_role" "alb_controller_irsa_role" {
       {
         Effect = "Allow"
         Principal = {
-          Federated = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${replace(data.aws_eks_cluster.ott_eks.identity[0].oidc[0].issuer, "https://", "")}"
+          Federated = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${replace(aws_eks_cluster.ott_eks.identity[0].oidc[0].issuer, "https://", "")}"
         }
         Action = "sts:AssumeRoleWithWebIdentity"
         Condition = {
           StringEquals = {
-            "${replace(data.aws_eks_cluster.ott_eks.identity[0].oidc[0].issuer, "https://", "")}:sub" : "system:serviceaccount:kube-system:aws-load-balancer-controller"
+            "${replace(aws_eks_cluster.ott_eks.identity[0].oidc[0].issuer, "https://", "")}:sub" : "system:serviceaccount:kube-system:aws-load-balancer-controller"
           }
         }
       }

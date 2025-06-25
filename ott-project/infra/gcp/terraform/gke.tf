@@ -8,6 +8,9 @@ resource "google_container_cluster" "primary" {
   subnetwork = google_compute_subnetwork.private_subnet.self_link
 
   ip_allocation_policy {}
+
+    deletion_protection = false
 }
+
 
 

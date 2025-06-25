@@ -135,6 +135,7 @@ resource "google_compute_instance" "public_vm" {
   name         = "demo-vm"
   machine_type = "e2-micro"
   zone         = var.zone
+  
 
   tags = ["ssh-enabled"]
 
@@ -150,13 +151,20 @@ resource "google_compute_instance" "public_vm" {
     access_config {}  # 외부 IP 부여됨
   }
 
+  
   metadata_startup_script = <<-EOT
     #!/bin/bash
     apt-get update
     apt-get install -y curl wget
     echo "Public VM is ready"
   EOT
+
+  
+  metadata = {
+    ssh-keys = "gcp-user:${file("~/.ssh/team4-gcp-key.pub")}"
+  }
 }
+
 
 
 # -----------------------------------
@@ -167,7 +175,7 @@ resource "google_compute_instance" "private_vm" {
   machine_type = "e2-micro"
   zone         = var.zone
 
-  tags = ["icmp-enabled"]
+  tags = ["icmp-enabled","ssh-enabled"]
 
   boot_disk {
     initialize_params {
@@ -211,4 +219,38 @@ resource "google_compute_instance" "private_vm" {
 resource "google_storage_bucket" "storage_bucket" {
   name     = var.bucket_name
   location = var.region
+}
+
+
+
+resource "google_sql_database_instance" "mysql_instance" {
+  name             = var.instance_name
+  database_version = "MYSQL_8_0"
+  region           = var.region
+
+  deletion_protection = false  # 🔥 이 줄 추가
+
+  settings {
+    tier = "db-f1-micro"  # db-f1-micro는 비용을 줄이는 저사양 옵션
+
+    ip_configuration {
+      ipv4_enabled = true
+
+      authorized_networks {
+        name  = "allow-all"
+        value = "0.0.0.0/0"
+      }
+    }
+  }
+}
+
+resource "google_sql_user" "db_user" {
+  name     = var.db_user
+  instance = google_sql_database_instance.mysql_instance.name
+  password = var.db_password
+}
+
+resource "google_sql_database" "app_db" {
+  name     = var.db_name
+  instance = google_sql_database_instance.mysql_instance.name
 }

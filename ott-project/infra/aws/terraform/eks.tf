@@ -1,4 +1,4 @@
-resource "aws_eks_cluster" "ott_cluster" {
+resource "aws_eks_cluster" "ott_eks" {
   name     = "ott-eks"
   role_arn = aws_iam_role.eks_cluster_role.arn
 
@@ -12,7 +12,7 @@ resource "aws_eks_cluster" "ott_cluster" {
 }
 
 resource "aws_eks_node_group" "ott_node_group" {
-  cluster_name    = aws_eks_cluster.ott_cluster.name
+  cluster_name    = aws_eks_cluster.ott_eks.name
   node_group_name = "ott-node-group"
   node_role_arn   = aws_iam_role.eks_node_role.arn
   subnet_ids      = module.vpc.private_subnets

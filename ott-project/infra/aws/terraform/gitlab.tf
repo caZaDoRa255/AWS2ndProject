@@ -43,7 +43,7 @@ module "private_ec2" {
 
 resource "aws_security_group" "private_sg" {
   name        = "private-ec2-sg"
-  description = "Allow SSH from bastion"
+  description = "Allow SSH from bastion and ICMP from GCP"
   vpc_id      = module.vpc.vpc_id
 
   ingress {
@@ -51,6 +51,14 @@ resource "aws_security_group" "private_sg" {
     to_port         = 22
     protocol        = "tcp"
     security_groups = [aws_security_group.bastion_sg.id]
+  }
+
+    # ✅ ICMP 허용 추가 (GCP CIDR)
+  ingress {
+    from_port   = -1
+    to_port     = -1
+    protocol    = "icmp"
+    cidr_blocks = ["10.10.2.0/24"] # GCP 쪽 VPC CIDR 넣기
   }
 
   egress {
