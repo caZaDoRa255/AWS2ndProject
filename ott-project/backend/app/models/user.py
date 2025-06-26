@@ -42,7 +42,7 @@ class UserInDB(BaseModel): #내부에서만 사용(DB 저장용 / 내부 처리�
     created_at: datetime   
 
     class Config:
-        orm_mode = True  # SQLAlchemy 객체 -> Pydantic 모델 자동 매핑 허용
+        from_attributes = True  # SQLAlchemy 객체 -> Pydantic 모델 자동 매핑 허용
 
 #✅ auth의 User.id → int인 이유
 # DB에서 AUTO_INCREMENT로 관리하는 순번 ID

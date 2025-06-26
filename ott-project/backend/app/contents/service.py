@@ -13,7 +13,8 @@ def search_by_keyword(db: Session, keyword: str) -> List[ContentCreate]:
     results = db.query(Content).filter(
         or_(
             func.replace(func.lower(Content.title), " ", "").like(func.lower(pattern)),
-            func.replace(func.lower(Content.category), " ", "").like(func.lower(pattern))
+            func.replace(func.lower(Content.category), " ", "").like(func.lower(pattern)),
+            func.replace(func.lower(Content.description), " ", "").like(func.lower(pattern))
         )
     ).all()
 

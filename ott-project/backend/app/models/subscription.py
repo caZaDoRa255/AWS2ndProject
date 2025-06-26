@@ -57,7 +57,7 @@ class Subscription(BaseModel):
     expires_at: Optional[date] = None  # ex. 2025-06-30
 
     class Config:
-        orm_mode = True
+        from_attributes = True
         exclude_none = True #이게 있어야 만료일 none일때 null안뜸
         
 #테스트용(구독권저장)

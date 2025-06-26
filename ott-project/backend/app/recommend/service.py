@@ -20,6 +20,7 @@ def get_recommendations(db: Session, user_id: int, limit: int = 5)-> List[Conten
 
     if not history:
         return []  # 시청 기록 없으면 추천도 없음
+    # 추천이 아예 없을 경우 → "새로운 콘텐츠를 탐색해보세요!" 같은 UI 추가
 
     # 2. 최근 시청한 장르 뽑기 (마지막 3개)
     recent_categories = [record.category for record in history[-3:] if record.category] 

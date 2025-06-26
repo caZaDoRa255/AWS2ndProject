@@ -20,4 +20,4 @@ class Preference(BaseModel):
     genres: List[str]  # 예: ["drama", "action", "documentary"]
 
     class Config:
-        orm_mode = True
+        from_attributes = True

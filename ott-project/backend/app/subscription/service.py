@@ -3,6 +3,17 @@ from sqlalchemy.orm import Session
 from app.models.subscription import SubscriptionPlan, UserSubscription
 # from sqlalchemy.orm import joinedload #테스트용
 
+# 현재 유저가 유효한 이용권을 갖고 있는가? → True / False 리턴
+def has_valid_subscription(user_id: int, db: Session) -> bool:
+    now = datetime.now(timezone.utc)
+    sub = db.query(UserSubscription).filter(
+        UserSubscription.user_id == user_id,
+        UserSubscription.expires_at > now
+    ).first()
+
+    return sub is not None
+# 만료된 유저는 프론트에서 결제 유도 메시지 표시하기
+
 # ✅ 유저 구독 저장
 def subscribe_user(db: Session, user_id: int, plan_id: int) -> UserSubscription:
     plan = db.query(SubscriptionPlan).filter(SubscriptionPlan.id == plan_id).first()

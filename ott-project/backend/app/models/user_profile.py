@@ -35,7 +35,7 @@ class UserProfile(BaseModel):
 
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # 유저 프로필 수정 시에는 "수정할 항목만 보내면 된다"는 구조
 class UserUpdate(BaseModel):

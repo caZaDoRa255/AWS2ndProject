@@ -23,6 +23,6 @@ class ClickLogResponse(BaseModel):
     clicked_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # 지금까지는 요청,응답이 같아서 같이 썼지만 클릭로그는 요청,응답이 달라서 따로 작성하는게 좋음
