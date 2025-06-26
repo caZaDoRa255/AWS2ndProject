@@ -82,7 +82,6 @@ resource "aws_route53_record" "acm_validation_www" {
 
 data "aws_route53_zone" "harbor_link" {
   zone_id = "Z0854242A863LNCHFSQJ"
-
 }
 
 resource "aws_route53_record" "harbor_record_link" {

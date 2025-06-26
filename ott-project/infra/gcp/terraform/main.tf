@@ -259,16 +259,20 @@ resource "google_sql_database_instance" "mysql_instance" {
   }
 }
 
+resource "google_sql_database" "app_db" {
+  name     = "app_db"
+  instance = google_sql_database_instance.mysql_instance.name
+  charset  = "utf8mb4"
+  collation = "utf8mb4_general_ci"
+}
+
+
 resource "google_sql_user" "db_user" {
   name     = var.db_user
   instance = google_sql_database_instance.mysql_instance.name
   password = var.db_password
 }
 
-resource "google_sql_database" "app_db" {
-  name     = var.db_name
-  instance = google_sql_database_instance.mysql_instance.name
-}
 
 #---------------------------------------------------------
 # 필수 API 사용 설정 (권한 문제 해결을 위해 Artifact Registry 및 Cloud Run API 추가)
@@ -277,36 +281,42 @@ resource "google_project_service" "api_gateway" {
   project                    = var.project_id
   service                    = "apigateway.googleapis.com"
   disable_dependent_services = true # 추가
+  disable_on_destroy = false
 }
 
 resource "google_project_service" "cloudfunctions" {
   project                    = var.project_id
   service                    = "cloudfunctions.googleapis.com"
   disable_dependent_services = true # 추가
+  disable_on_destroy = false
 }
 
 resource "google_project_service" "cloudbuild" {
   project                    = var.project_id
   service                    = "cloudbuild.googleapis.com"
   disable_dependent_services = true # 추가
+  disable_on_destroy = false
 }
 
 resource "google_project_service" "storage" {
   project                    = var.project_id
   service                    = "storage.googleapis.com"
   disable_dependent_services = true # 추가
+  disable_on_destroy = false
 }
 
 resource "google_project_service" "eventarc" {
   project                    = var.project_id
   service                    = "eventarc.googleapis.com"
   disable_dependent_services = true # 추가
+  disable_on_destroy = false
 }
 
 resource "google_project_service" "pubsub" {
   project                    = var.project_id
   service                    = "pubsub.googleapis.com"
   disable_dependent_services = true # 추가
+  disable_on_destroy = false
 }
 
 # Artifact Registry API 활성화
@@ -314,6 +324,7 @@ resource "google_project_service" "artifactregistry" {
   project                    = var.project_id
   service                    = "artifactregistry.googleapis.com"
   disable_dependent_services = true # 추가
+  disable_on_destroy = false
 }
 
 # Cloud Run API 활성화
@@ -321,6 +332,7 @@ resource "google_project_service" "cloudrun" {
   project                    = var.project_id
   service                    = "run.googleapis.com"
   disable_dependent_services = true # 추가
+  disable_on_destroy = false
 }
 
 # IAM API 활성화 (서비스 계정 권한 관리를 위해)
@@ -328,7 +340,27 @@ resource "google_project_service" "iam" {
   project            = var.project_id
   service            = "iam.googleapis.com"
   disable_dependent_services = true # 추가
+  disable_on_destroy = false
   
+}
+
+resource "google_project_service" "cloudfunctions_api" {
+  project = "ott-project-462006" # 실제 프로젝트 ID로 변경하세요.
+  service = "cloudfunctions.googleapis.com"
+  disable_dependent_services = true 
+  disable_on_destroy = false
+}
+
+# 이 리소스는 특정 GCP 서비스 API를 활성화합니다.
+resource "google_project_service" "container_api" {
+  project = "ott-project-462006"
+  service = "container.googleapis.com"
+  disable_dependent_services = true
+  disable_on_destroy = false
+    # Kubernetes Engine API가 활성화될 때까지 기다리도록 의존성 추가
+  depends_on = [
+  google_project_service.container_api
+  ] 
 }
 
 #---------------------------------------------------------
@@ -426,7 +458,7 @@ resource "google_project_iam_member" "terraform_api_gateway_editor" {
 
 
 #---------------------------------------------------------
-#cloud function2 (HTTP트리거) 수정본(이거 되면 아래꺼삭제해)
+#cloud function2 (HTTP트리거) 
 
 resource "google_storage_bucket" "function_bucket" {
   name     = "${var.project_id}-function-bucket"

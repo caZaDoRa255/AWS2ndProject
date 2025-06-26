@@ -56,7 +56,7 @@ variable "private_vm_name" {
 }
 
 variable "gke_cluster_name" {
-  default = "demo-gke"
+  default = "team4-gke"
 }
 
 variable "gke_location" {
@@ -114,4 +114,25 @@ variable "db_user" {
 variable "db_password" {}  # terraform.tfvars 또는 secret으로 주입
 variable "db_name" {
   default = "app_db"
+}
+
+variable "my_ip" {
+  description = "GKE API 서버에 접근할 수 있도록 허용할 IP"
+  default     = "210.124.140.19/32"  
+}
+
+variable "gitlab_username" {
+  description = "GitLab 사용자명"
+  type        = string
+}
+
+variable "gitlab_token" {
+  description = "GitLab Personal Access Token"
+  type        = string
+  sensitive   = true
+}
+
+variable "fastapi_image" {
+  description = "FastAPI Docker 이미지 주소"
+  type        = string
 }

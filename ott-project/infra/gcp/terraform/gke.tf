@@ -1,4 +1,4 @@
-resource "google_container_cluster" "primary" {
+resource "google_container_cluster" "gke" {
   name     = var.gke_cluster_name
   location = var.gke_location
 
@@ -10,7 +10,27 @@ resource "google_container_cluster" "primary" {
   ip_allocation_policy {}
 
     deletion_protection = false
+
+     master_authorized_networks_config {
+      cidr_blocks {
+        display_name = "my-ip"
+        cidr_block = var.my_ip
+      }
+    }
 }
+
+resource "null_resource" "get_gke_credentials" {
+  depends_on = [google_container_cluster.gke]
+
+  triggers = {
+    always_run = timestamp()
+  }
+
+  provisioner "local-exec" {
+    command = "gcloud container clusters get-credentials ${var.gke_cluster_name} --region ${var.gke_location} --project ${var.project_id}"
+  }
+}
+
 
 
 
