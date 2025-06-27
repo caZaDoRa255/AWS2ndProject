@@ -33,8 +33,8 @@ class SubscriptionPlan(Base):
     __tablename__ = "subscription_plans"
 
     id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False)              # ex. 프리미엄, 베이직등의 구독권(paln)저장
-    description = Column(String, nullable=True)        # ex. 혜택 설명
+    name = Column(String(100), nullable=False)              # ex. 프리미엄, 베이직등의 구독권(paln)저장
+    description = Column(String(1000), nullable=True)        # ex. 혜택 설명
     price = Column(Integer, nullable=False)            # 단위: 원
     duration_days = Column(Integer, nullable=False)    # ex. 30일
 

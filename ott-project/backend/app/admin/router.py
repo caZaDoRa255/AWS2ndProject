@@ -1,4 +1,3 @@
-# 관리자 로그인
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.db.session import get_db
@@ -11,8 +10,68 @@ from app.auth.utils import get_current_user
 
 from app.models.subscription import SubscriptionPlanCreate, SubscriptionPlanResponse, SubscriptionPlan
 
+import boto3
+import os
+import logging
+
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
+# s3 설정값
+AWS_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+BUCKET_NAME = "ott-project-video-storage-team4-ott-project"
+REGION = "ap-northeast-2"
+
+s3_client = boto3.client(
+    's3',
+    region_name=REGION,
+    aws_access_key_id=AWS_ACCESS_KEY,
+    aws_secret_access_key=AWS_SECRET_KEY
+)
+
+# ✅ 로그 설정 (클라우드와치)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    filename="/var/log/myapp.log",  # CloudWatch가 수집할 경로
+    filemode="a" #filename= 으로 지정한 파일을 어떤 방식으로 열 것인지 지정,append (추가 모드),보통이걸씀
+)
+logger = logging.getLogger(__name__)
+
+# __name__은 현재 모듈 이름 (예: admin.router)
+# 이걸 로거 이름으로 쓰면:
+# 로그 메시지의 출처를 식별할 수 있고
+# 나중에 파일별로 로그 필터링하거나 레벨 조정하기 쉬움
+
+# %(asctime)s	  로그 발생 시간 (예: 2025-06-27 22:12:45)
+# %(levelname)s	  로그 레벨 (INFO, ERROR, WARNING 등)
+# %(message)s	  네가 logger로 남기는 진짜 메시지 ("[스트리밍 실패] content_id=5..." 등)
+
+# 영상 업로드용 url
+@router.post("/videos/upload-url")
+def generate_upload_url(
+    video_id: int,
+    current_user: User = Depends(get_current_user)  # 관리자 인증
+):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="운영자만 접근 가능합니다")
+
+    try:
+        key = f"video/{video_id}.mp4"  
+        #관리자가 어떤 영상이름으로 올리든(예:미니언즈.mp4) s3에는 영상이름이 video/1.mp4 이런식으로 저장됨
+        url = s3_client.generate_presigned_url(
+            ClientMethod='put_object',
+            Params={'Bucket': BUCKET_NAME, 'Key': key, 'ContentType': 'video/mp4'},
+            ExpiresIn=3600  #1시간 사용가능 , 이 시간 내에 업로드(PUT 요청)해야함
+        )
+        logger.info(f"[관리자 presigned URL 발급] video_id={video_id}, key={key}, admin_id={current_user.id}")
+        return {"upload_url": url, "key": key}
+    
+    # URL 발급 실패 시 백엔드 에러를 안전하게 리턴(예:AWS 키가 잘못됨,S3 권한 없음,네트워크 오류,버킷 이름)
+    except Exception as e: 
+        logger.error(f"[presigned URL 발급 실패] video_id={video_id}, admin_id={current_user.id}, error={str(e)}")
+        raise HTTPException(status_code=500, detail="영상 URL 발급에 실패했습니다.")
+    
 # 관리자 로그인
 @router.post("/login", response_model=TokenResponse)
 def admin_login(
