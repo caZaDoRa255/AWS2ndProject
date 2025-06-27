@@ -109,7 +109,7 @@ variable "instance_name" {
   default = "mydb"
 }
 variable "db_user" {
-  default = "admin"
+  default = "ott_admin"
 }
 variable "db_password" {}  # terraform.tfvars 또는 secret으로 주입
 variable "db_name" {
@@ -122,14 +122,13 @@ variable "my_ip" {
 }
 
 variable "gitlab_username" {
-  description = "GitLab 사용자명"
-  type        = string
+  type = string
 }
 
 variable "gitlab_token" {
   description = "GitLab Personal Access Token"
   type        = string
-  sensitive   = true
+  sensitive   = false
 }
 
 variable "fastapi_image" {

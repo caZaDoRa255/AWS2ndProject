@@ -69,6 +69,10 @@ variable "gcp_private_subnet_cidr" {
   type        = string
 }
 
+variable "iam_user_arn" {
+  type        = string
+  description = "ARN of the IAM user or role to grant access to the S3 bucket"
+}
 
 
 

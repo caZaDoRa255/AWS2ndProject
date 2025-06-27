@@ -7,7 +7,10 @@ resource "google_container_cluster" "gke" {
   network    = google_compute_network.vpc_network.self_link
   subnetwork = google_compute_subnetwork.private_subnet.self_link
 
-  ip_allocation_policy {}
+  ip_allocation_policy {
+    cluster_secondary_range_name  = "gke-pod-range"
+    services_secondary_range_name = "gke-svc-range"
+  }
 
     deletion_protection = false
 

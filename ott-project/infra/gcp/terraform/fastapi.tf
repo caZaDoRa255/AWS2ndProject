@@ -44,6 +44,7 @@ resource "kubernetes_deployment" "fastapi" {
       }
     }
   }
+  depends_on = [null_resource.get_gke_credentials]
 }
 
 resource "kubernetes_service" "fastapi_service" {
@@ -63,4 +64,5 @@ resource "kubernetes_service" "fastapi_service" {
 
     type = "ClusterIP"
   }
+  depends_on = [null_resource.get_gke_credentials]
 }
