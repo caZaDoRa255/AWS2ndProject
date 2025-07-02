@@ -1,5 +1,5 @@
 *.pem
-.env
+
 secrets/
 node_modules/
 __pycache__/
@@ -7,4 +7,5 @@ __pycache__/
 *.tfvars
 terraform.tfvars
 *.bak
+.env
 .aws/

@@ -3,6 +3,8 @@ import { useLocation } from 'react-router-dom';
 import "../style/search.css";
 import { useNavigate } from "react-router-dom";
 
+
+
 function Search() {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -11,12 +13,13 @@ function Search() {
   // URL 쿼리에서 keyword 추출
   const query = new URLSearchParams(location.search);
   const keyword = query.get('keyword');
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     
     const fetchResults = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/contents/search?keyword=${encodeURIComponent(keyword)}`);
+        const response = await fetch(`${apiUrl}/contents/search?keyword=${encodeURIComponent(keyword)}`);
         if (!response.ok) {
           throw new Error('검색 실패');
         }

@@ -5,11 +5,13 @@ import "../style/Me.css";
 function Me() {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch("http://localhost:8000/auth/me/get", {
+        
+        const res = await fetch(`${apiUrl}/auth/me/get`, {
           method: "GET",
           credentials: "include",
         });
@@ -35,7 +37,7 @@ function Me() {
     }
 
     try {
-      const res = await fetch("http://localhost:8000/auth/me/delete", {
+      const res = await fetch(`${apiUrl}/auth/me/delete`, {
         method: "DELETE",
         credentials: "include", // 쿠키 자동 포함
       });

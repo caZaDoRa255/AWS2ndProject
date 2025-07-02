@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+// 안쓰일 가능성 높음
 function VideoUploader() {
   const [file, setFile] = useState(null);
   const [status, setStatus] = useState("");

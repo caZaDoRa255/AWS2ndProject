@@ -7,11 +7,13 @@ function Home() {
   const [contents, setContents] = useState([]);
   const scrollRef = useRef(null);
   const navigate = useNavigate();
+  const apiUrl = import.meta.env.VITE_API_URL;
+
 
   useEffect(() => {
     const fetchContents = async () => {
       try {
-        const res = await fetch("http://localhost:8000/contents/");
+        const res = await fetch(`${apiUrl}/contents/`);
         
         const data = await res.json();
         console.log("서버에서 받은 콘텐츠:", data); // 🔥 이 줄 추가
@@ -43,7 +45,7 @@ function Home() {
       <div className="home-banner">
         <img src={backgroundImage} alt="Moodly 배경" className="banner-image" />
       </div>
-
+      <h2 className="section-title">Moodly 인기 콘텐츠</h2>
       <div className="scroll-container">
         <button className="scroll-button left" onClick={scrollLeft}>←</button>
         <div className="content-row" ref={scrollRef}>

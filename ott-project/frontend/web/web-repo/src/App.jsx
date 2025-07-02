@@ -12,8 +12,29 @@ import Search from './pages/search.jsx'; // search.jsx import 추가
 import ContentDetail from './pages/contentDetail.jsx'
 import AdminLogin from './pages/admin/adminLogin.jsx'
 import AdminDashboard from './pages/admin/adminDashboard.jsx'
+import Chat from './pages/Chat.jsx'
 
 function App() {
+  // const callGCPFunction = async () => {
+  // try {
+  //   const res = await fetch("https://REGION-PROJECT_ID.cloudfunctions.net/YOUR_FUNCTION_NAME", {
+  //     method: "GET", // 또는 POST 등
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //       // 필요시 Authorization 헤더도 추가
+  //     }
+  //   });
+
+  //   if (!res.ok) throw new Error("GCP 호출 실패");
+
+  //   const result = await res.json();
+  //   alert("함수 호출 성공: " + JSON.stringify(result));
+  // } catch (err) {
+  //   console.error(err);
+  //   alert("GCP 호출 실패: " + err.message);
+  // }
+  // }; // 이건 나중에 지운다.
+
   const navigate = useNavigate();
   const [keyword, setKeyword] = useState("");
 
@@ -37,6 +58,7 @@ function App() {
           <Link to="/auth">Auth</Link>
           <Link to="/me">Me</Link>
           <Link to="/Sub">Subscription</Link>
+          {/* <button onClick={callGCPFunction} className="gcp-button">⚙️ GCP 호출</button>  */}
           <input
             type="text"
             placeholder="검색..."
@@ -52,6 +74,7 @@ function App() {
         <Route path="/home" element={<Home />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/me" element={<Me />} />
+        <Route path="/chat" element={<Chat />} />
         <Route path="/Sub" element={<Sub />} />
         <Route path="/upload" element={<Upload />} />
         <Route path="/stream" element={<Stream />} />

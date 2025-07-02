@@ -82,3 +82,11 @@
   display: block;
   object-fit: cover;
 }
+
+.section-title {
+  font-size: 3rem;
+  font-weight: bold;
+  margin: 20px 0 10px 10px;
+  text-align: left;          /* 👈 왼쪽 정렬 명시 */
+  align-self: flex-start;    /* 👈 flexbox일 경우 대비 */
+}

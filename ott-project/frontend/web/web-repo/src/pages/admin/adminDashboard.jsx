@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 const Dashboard = () => {
   const [jsonInput, setJsonInput] = useState(`[
 ]`);
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   const handleSubmit = async () => {
     let contents;
@@ -20,7 +21,7 @@ const Dashboard = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:8000/admin/content/bulk", {
+      const response = await fetch(`${apiUrl}/admin/content/bulk`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

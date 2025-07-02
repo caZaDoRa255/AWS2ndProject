@@ -50,10 +50,12 @@ function LoginSignup() {
   const [password, setPassword] = useState('');
   const [nickname, setNickname] = useState('');
   const [msg, setMsg] = useState('');
+  const apiUrl = import.meta.env.VITE_API_URL;
+
 
   const handleLogin = async () => {
     try {
-      const res = await fetch('http://localhost:8000/auth/login', {
+      const res = await fetch(`${apiUrl}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: "include", // ⚠️ 쿠키 포함 필수!
@@ -83,7 +85,7 @@ function LoginSignup() {
 
   const handleSignup = async () => {
     try {
-      const response = await fetch("http://localhost:8000/auth/signup", {
+      const response = await fetch(`${apiUrl}auth/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

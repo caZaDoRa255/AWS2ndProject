@@ -6,12 +6,13 @@ function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
-
+  const apiUrl = import.meta.env.VITE_API_URL;
+  
   const handleLogin = async (e) => {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:8000/admin/login", {
+      const response = await fetch(`${apiUrl}/admin/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

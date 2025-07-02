@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import "../style/stream.css";
-
+// 테스트용으로 만듬. 나중에 쓸지도?
 function VideoPlayer() {
   const videoRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
