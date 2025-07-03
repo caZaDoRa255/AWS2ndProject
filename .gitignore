@@ -9,3 +9,6 @@ terraform.tfvars
 *.bak
 .env
 .aws/
+*.json
+terraform.tfstate
+terraform.tfstate.backup
