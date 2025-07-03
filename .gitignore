@@ -9,3 +9,4 @@ terraform.tfvars
 *.bak
 .env
 .aws/
+*.json
