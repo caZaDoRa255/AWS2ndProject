@@ -1,9 +1,13 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import axios from "axios";
+import "../style/contentDetail.css";
 
 function ContentDetail() {
   const { id } = useParams();
   const [content, setContent] = useState(null);
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState("");
   const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
@@ -11,7 +15,20 @@ function ContentDetail() {
       .then(res => res.json())
       .then(data => setContent(data))
       .catch(err => console.error("불러오기 실패:", err));
+
+    fetchComments();
   }, [id]);
+
+  const fetchComments = async () => {
+    try {
+      const res = await axios.get(`${apiUrl}/comments/content/${id}`, {
+        withCredentials: true,
+      });
+      setComments(res.data);
+    } catch (err) {
+      console.error("댓글 불러오기 실패:", err);
+    }
+  };
 
   const handleFavorite = async () => {
     try {
@@ -35,7 +52,29 @@ function ContentDetail() {
     }
   };
 
-  if (!content) return <div>로딩 중...</div>;
+  const handleCommentSubmit = async (e) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+
+    try {
+      const res = await axios.post(`${apiUrl}/comments/content/${id}`, 
+        { comment_text: newComment },
+        { withCredentials: true }
+      );
+
+      if (!res.data) {
+        throw new Error("댓글 추가 실패");
+      }
+
+      setNewComment("");
+      fetchComments(); // Refresh comments
+    } catch (err) {
+      console.error("댓글 추가 실패:", err);
+      alert("댓글 추가 실패: " + (err.response?.data?.detail || err.message));
+    }
+  };
+
+  if (!content) return <div className="loading-text">로딩 중...</div>;
 
   return (
     <div className="detail-page">
@@ -47,6 +86,34 @@ function ContentDetail() {
       <button className="like-button" onClick={handleFavorite}>
         ❤️ 찜하기
       </button>
+
+      <section className="comments-section">
+        <h2>Comments</h2>
+        <div className="comment-list">
+          {comments.length > 0 ? (
+            comments.map((comment) => (
+              <div 
+                key={comment.id} 
+                className={`comment-item ${comment.subscription_id === 2 ? 'premium' : comment.subscription_id === 3 ? 'vip' : ''}`}
+              >
+                <p className="comment-author">{comment.nickname}</p>
+                <p className="comment-date">{new Date(comment.date).toLocaleString()}</p>
+                <p className="comment-text">{comment.comment}</p>
+              </div>
+            ))
+          ) : (
+            <p className="no-comments-message">아직 댓글이 없습니다. 첫 댓글을 남겨보세요!</p>
+          )}
+        </div>
+        <form className="comment-form" onSubmit={handleCommentSubmit}>
+          <textarea
+            placeholder="댓글을 남겨주세요..."
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+          ></textarea>
+          <button type="submit">댓글 작성</button>
+        </form>
+      </section>
     </div>
   );
 }

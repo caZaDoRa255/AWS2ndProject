@@ -13,6 +13,7 @@ import ContentDetail from './pages/contentDetail.jsx'
 import AdminLogin from './pages/admin/adminLogin.jsx'
 import AdminDashboard from './pages/admin/adminDashboard.jsx'
 import Chat from './pages/Chat.jsx'
+import StickerGame from './pages/StickerGame.jsx'
 
 function App() {
   // const callGCPFunction = async () => {
@@ -83,6 +84,7 @@ function App() {
         <Route path="/content/:id" element={<ContentDetail />} />
         <Route path="/admin" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/sticker-game" element={<StickerGame />} />
       </Routes>
     </div>
   );

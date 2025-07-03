@@ -1,16 +1,20 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import "../style/Me.css";
 
 function Me() {
   const [user, setUser] = useState(null);
+  const [favorites, setFavorites] = useState([]);
   const navigate = useNavigate();
   const apiUrl = import.meta.env.VITE_API_URL;
+  const goToDetail = (id) => {
+    navigate(`/content/${id}`);
+  };
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        
         const res = await fetch(`${apiUrl}/auth/me/get`, {
           method: "GET",
           credentials: "include",
@@ -31,8 +35,23 @@ function Me() {
     fetchProfile();
   }, []);
 
+  const fetchFavorites = async () => {
+    try {
+      const res = await axios.get(`${apiUrl}/favorites/`, {
+        withCredentials: true,
+      });
+      setFavorites(res.data);
+    } catch (err) {
+      console.error("찜 목록 불러오기 실패:", err);
+    }
+  };
+
   const handleDeleteUser = async () => {
-    if (!window.confirm("정말 계정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) {
+    if (
+      !window.confirm(
+        "정말 계정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
+      )
+    ) {
       return;
     }
 
@@ -64,7 +83,8 @@ function Me() {
       {!user.subscription || user.subscription.name === "없음" ? (
         <div className="subscribe-prompt">
           <p>
-            아직 가입이 안되어 있군요... Moodly의 영화, 시리즈와 서비스를 단 <strong>7000₩</strong>에 누리세요!
+            아직 가입이 안되어 있군요... Moodly의 영화, 시리즈와 서비스를 단{" "}
+            <strong>7000₩</strong>에 누리세요!
           </p>
           <button onClick={() => navigate("/Sub")}>구독하러 가기</button>
         </div>
@@ -72,18 +92,49 @@ function Me() {
 
       <div className="page-container">
         <h1>My Page</h1>
-        <p><strong>ID:</strong> {user.id}</p>
-        <p><strong>Nickname:</strong> {user.nickname}</p>
-        <p><strong>Language:</strong> {user.language || "미지정"}</p>
-        <p><strong>Subscription:</strong> {user.subscription.name}</p>
-        <p><strong>Expires At:</strong> {user.subscription.expires_at || "-"}</p>
+        <p>
+          <strong>ID:</strong> {user.id}
+        </p>
+        <p>
+          <strong>Nickname:</strong> {user.nickname}
+        </p>
+        <p>
+          <strong>Language:</strong> {user.language || "미지정"}
+        </p>
+        <p>
+          <strong>Subscription:</strong> {user.subscription.name}
+        </p>
+        <p>
+          <strong>Expires At:</strong> {user.subscription.expires_at || "-"}
+        </p>
 
         <button
           onClick={handleDeleteUser}
-          style={{ marginTop: "20px", background: "red", color: "white", padding: "10px", borderRadius: "5px" }}
+          style={{
+            marginTop: "20px",
+            background: "red",
+            color: "white",
+            padding: "10px",
+            borderRadius: "5px",
+          }}
         >
           🔥 계정 삭제하기
         </button>
+
+        <div className="favorites-section">
+          <button onClick={fetchFavorites} className="favorites-button">
+            찜 목록 보기
+          </button>
+          <div className="favorites-list">
+            {favorites.map((fav) => (
+              <div key={fav.content_id} className="favorite-item"
+              onClick={() => goToDetail(fav.content_id)}
+            >
+                <p>{fav.title}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

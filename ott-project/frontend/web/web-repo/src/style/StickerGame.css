@@ -1,0 +1,61 @@
+.sticker-game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  background-color: #222;
+  color: #eee;
+  min-height: 100vh;
+}
+
+.game-title {
+  color: #e50914;
+  margin-bottom: 30px;
+}
+
+.sticker-palette {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 30px;
+  padding: 15px;
+  background-color: #333;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.palette-sticker {
+  width: 80px;
+  height: 80px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  transition: all 0.2s ease-in-out;
+}
+
+.palette-sticker:hover {
+  border-color: #e50914;
+  transform: scale(1.1);
+}
+
+.sticker-box {
+  width: 800px;
+  height: 500px;
+  border: 2px dashed #e50914;
+  background-color: #1a1a1a;
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+}
+
+.placed-sticker {
+  position: absolute;
+  width: 300px; /* 3 times bigger */
+  height: 300px; /* 3 times bigger */
+  cursor: grab;
+  transition: transform 0.1s ease-out; /* Smooth dragging */
+}
+
+.placed-sticker:active {
+  cursor: grabbing;
+}
