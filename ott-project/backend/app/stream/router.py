@@ -20,7 +20,7 @@ router = APIRouter(prefix="/history", tags=["History"])
 # S3 설정
 AWS_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-BUCKET_NAME = "your-bucket-name"
+BUCKET_NAME = "ott-project-video-storage-team4-ott-project"
 REGION = "ap-northeast-2"
 
 s3_client = boto3.client(

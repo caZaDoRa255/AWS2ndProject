@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Form
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.models.user import User , LoginRequest, TokenResponse
@@ -13,6 +13,9 @@ from app.models.subscription import SubscriptionPlanCreate, SubscriptionPlanResp
 import boto3
 import os
 import logging
+
+import uuid
+from pytube import YouTube
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -46,6 +49,81 @@ logger = logging.getLogger(__name__)
 # %(asctime)s	  로그 발생 시간 (예: 2025-06-27 22:12:45)
 # %(levelname)s	  로그 레벨 (INFO, ERROR, WARNING 등)
 # %(message)s	  네가 logger로 남기는 진짜 메시지 ("[스트리밍 실패] content_id=5..." 등)
+
+#  다운로드 폴더
+DOWNLOAD_DIR = "backend/downloads"  #다운로드 실행 시 한번만 실행
+
+# 폴더 없으면 생성
+os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+
+#  다운로드 API
+# 관리자페이지에서 작성시 예
+# 비디오 아이디 (1)
+# 영상 제목 (케이팝 데몬헌터스)
+# YouTube URL (https://www.youtube.com/watch?v=3JTVQTk36R8&t=12s)
+@router.post("/videos/download")
+def download_youtube_video(
+    video_id: int = Form(...),
+    youtube_url: str = Form(...),
+    title: str = Form(...),  #  이 3개를 관리자가 입력
+    current_user: User = Depends(get_current_user)
+):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="운영자만 접근 가능합니다.")
+
+    try:
+        yt = YouTube(youtube_url)
+        stream = yt.streams.filter(file_extension='mp4', progressive=True).order_by('resolution').desc().first()
+        if not stream:
+            raise HTTPException(status_code=404, detail="MP4 영상 스트림을 찾을 수 없습니다.")
+
+        safe_title = title.strip().replace("/", "-").replace("\\", "-")
+        filename = f"{video_id}_{safe_title}.mp4"
+        filepath = os.path.join(DOWNLOAD_DIR, filename)
+
+        stream.download(output_path=DOWNLOAD_DIR, filename=filename)
+
+        logging.info(f"[다운로드 완료] video_id={video_id}, url={youtube_url}, file={filename}")
+        return {
+            "message": "다운로드 성공",
+            "file": filename,
+            "video_id": video_id
+        }
+
+    except Exception as e:
+        logging.error(f"[다운로드 실패] video_id={video_id}, error={str(e)}")
+        raise HTTPException(status_code=500, detail="영상 다운로드 중 오류 발생")
+
+
+#  리스트 반환 API (관리자 확인용, 다운로드된 영상이 맞는지 확인(품질, 내용),
+# s3 올릴때나 컨텐츠 저장할때 순서 헷갈리지않게 확인 가능!)
+# 파일 옆에 "업로드" 버튼을 추가하는 식으로→ 영상마다 개별 확인 + 업로드 진행 가능
+# -> 버튼을 누르면 S3 presigned URL 요청 → PUT으로 로컬 파일 업로드 → 성공 메시지 출력
+@router.get("/videos/pending-uploads")
+def list_pending_videos(
+    current_user: User = Depends(get_current_user)
+):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="운영자만 접근 가능합니다.")
+
+    files = []
+    for filename in os.listdir(DOWNLOAD_DIR):
+        if filename.endswith(".mp4"):
+            parts = filename.split("_", 1)
+            if len(parts) == 2 and parts[0].isdigit():
+                vid = int(parts[0])
+                title = parts[1]
+            else:
+                vid = None
+                title = filename
+
+            files.append({
+                "video_id": vid,
+                "filename": filename,
+                "path": f"{DOWNLOAD_DIR}/{filename}"
+            })
+
+    return {"videos": files}
 
 # 영상 업로드용 url
 @router.post("/videos/upload-url")
