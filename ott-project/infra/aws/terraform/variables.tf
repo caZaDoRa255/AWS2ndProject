@@ -64,10 +64,10 @@ variable "environment" {
   default     = "local"
 }
 
-variable "gcp_private_subnet_cidr" {
-  description = "GCP VPC의 프라이빗 서브넷 CIDR 블록"
-  type        = string
-}
+# variable "gcp_private_subnet_cidr" {
+#   description = "GCP VPC의 프라이빗 서브넷 CIDR 블록"
+#   type        = string
+# }
 
 variable "iam_user_arn" {
   type        = string

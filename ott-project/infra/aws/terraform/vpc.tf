@@ -33,9 +33,9 @@ module "vpc" {
 }
 
 #------------------------------------------------------
-#aws_route → VPC 라우팅 테이블 설정
-resource "aws_route" "to_gcp" {
-  route_table_id         = module.vpc.private_route_table_ids[0] 
-  destination_cidr_block = var.gcp_private_subnet_cidr
-  gateway_id             = aws_vpn_gateway.vgw.id
-}
+#aws_route → VPC 라우팅 테이블 설정 (vpn2.tf에서 처리하므로 주석 처리)
+# resource "aws_route" "to_gcp" {
+#   route_table_id         = module.vpc.private_route_table_ids[0] 
+#   destination_cidr_block = var.gcp_private_subnet_cidr
+#   gateway_id             = aws_vpn_gateway.vgw.id
+# }

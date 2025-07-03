@@ -1,7 +1,7 @@
 
 # GCP Provider
 provider "google" {
-  credentials = file("${path.module}/ott-project-462006-20d0a27f8660.json")
+  credentials = file("C:/Users/sol/.gcp/ott-project-462006-20d0a27f8660.json")
   project     = "ott-project-462006"
   region      = "asia-northeast3"
   alias       = "gcp"
@@ -17,12 +17,22 @@ provider "aws" {
 }
 
 
+# data "aws_vpc" "ott_project" {
+#   provider = aws.aws
+#   filter {
+#     name   = "tag:Name"
+#     values = ["ott-project-vpc"]
+#   }
+#   filter {
+#     name   = "state"
+#     values = ["available"]
+#   }
+# }
+
+# VPC ID를 직접 지정 (여러 VPC가 있을 때)
 data "aws_vpc" "ott_project" {
   provider = aws.aws
-  filter {
-    name   = "tag:Name"
-    values = ["ott-project-vpc"]
-  }
+  id = "vpc-0b77da45c895e6b23"  # 실제 VPC ID로 변경 필요
 }
 
 data "google_compute_network" "custom_vpc" {

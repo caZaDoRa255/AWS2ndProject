@@ -67,9 +67,6 @@ variable "gke_node_count" {
   default = 2
 }
 
-variable "gke_node_machine_type" {
-  default = "e2-medium"
-}
 
 variable "gke_service_account_email" {
   description = "클러스터 노드에 연결할 서비스 계정 이메일"
@@ -80,29 +77,29 @@ variable "gcp_region" {
   default     = "asia-northeast3"  
 }
 
-# AWS 쪽 Customer Gateway의 퍼블릭 IP
-variable "aws_customer_gateway_ip" {
-  description = "Customer Gateway IP from AWS side"
-  type        = string
-}
+# # AWS 쪽 Customer Gateway의 퍼블릭 IP
+# variable "aws_customer_gateway_ip" {
+#   description = "Customer Gateway IP from AWS side"
+#   type        = string
+# }
 
-# 양쪽이 공유하는 VPN 터널 비밀키
-variable "vpn_shared_secret" {
-  description = "Shared secret used for VPN tunnel between AWS and GCP"
-  type        = string
-}
+# # 양쪽이 공유하는 VPN 터널 비밀키
+# variable "vpn_shared_secret" {
+#   description = "Shared secret used for VPN tunnel between AWS and GCP"
+#   type        = string
+# }
 
-# GCP 서브넷 CIDR
-variable "gcp_private_subnet_cidr" {
-  description = "CIDR block of the GCP private subnet"
-  type        = string
-}
+# # GCP 서브넷 CIDR
+# variable "gcp_private_subnet_cidr" {
+#   description = "CIDR block of the GCP private subnet"
+#   type        = string
+# }
 
-# AWS 서브넷 CIDR (라우팅용)
-variable "aws_private_subnet_cidr" {
-  description = "CIDR block of the AWS private subnet to route to"
-  type        = string
-}
+# # AWS 서브넷 CIDR (라우팅용)
+# variable "aws_private_subnet_cidr" {
+#   description = "CIDR block of the AWS private subnet to route to"
+#   type        = string
+# }
 
 
 variable "instance_name" {
@@ -118,7 +115,7 @@ variable "db_name" {
 
 variable "my_ip" {
   description = "GKE API 서버에 접근할 수 있도록 허용할 IP"
-  default     = "210.124.140.19/32"  
+  default     = "210.179.64.41/32"  
 }
 
 variable "gitlab_username" {

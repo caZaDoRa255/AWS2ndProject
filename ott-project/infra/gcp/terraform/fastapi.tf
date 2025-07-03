@@ -62,7 +62,7 @@ resource "kubernetes_service" "fastapi_service" {
       target_port = 8000
     }
 
-    type = "ClusterIP"
+    type = "LoadBalancer"
   }
   depends_on = [null_resource.get_gke_credentials]
 }
