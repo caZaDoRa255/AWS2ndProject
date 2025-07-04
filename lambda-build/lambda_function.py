@@ -14,6 +14,7 @@ def lambda_handler(event, context):
     download_path = '/tmp/original.jpg'
     upload_path = '/tmp/thumbnail.jpg'
     output_key = key.replace('uploads/', 'thumbnails/')
+    # /tmp 경로는 Lambda에서 유일하게 쓰기 가능한 디렉토리
     
     s3.download_file(bucket, key, download_path)
 
