@@ -14,6 +14,7 @@ RUN yum install -y \
     freetype-devel \
     libjpeg-turbo-devel \
     zlib-devel \
+    zip \
     # 다른 이미지 처리 라이브러리가 필요하다면 추가 (예: webp-devel, lcms2-devel, tcl-devel, tk-devel, openjp2-devel 등)
     # 현재 `Pillow`만이라면 위 4-5개만으로 충분할 가능성이 높습니다.
     && yum clean all \
