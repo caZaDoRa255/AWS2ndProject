@@ -28,5 +28,4 @@ def lambda_handler(event, context):
     s3.upload_file(upload_path, bucket, output_key)
     print(f"Thumbnail saved at: s3://{bucket}/{output_key}")
 
-    #  수정된 코드 없음, s3 엔터티 태그(Etag) 바뀌는지 확인위해 작성
-    # 람다가 최신일자로 잘 변경될것인가..
+    # 태그변경하기위한 주석
