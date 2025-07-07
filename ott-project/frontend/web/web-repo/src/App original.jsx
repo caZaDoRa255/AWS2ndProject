@@ -16,23 +16,6 @@ import Chat from './pages/Chat.jsx'
 import StickerGame from './pages/StickerGame.jsx'
 
 function App() {
-  const apiUrl = import.meta.env.VITE_API_URL;
-  useEffect(() => {
-    const checkFastAPIConnection = async () => {
-      try {
-        const response = await fetch(`${apiUrl}/`); // Assuming FastAPI runs on port 8000
-        if (response.ok) {
-          console.log('Successfully connected to FastAPI endpoint!');
-        } else {
-          console.error('Failed to connect to FastAPI endpoint. Status:', response.status);
-        }
-      } catch (error) {
-        console.error('Error connecting to FastAPI endpoint:', error);
-      }
-    };
-
-    checkFastAPIConnection();
-  }, []);
   // const callGCPFunction = async () => {
   // try {
   //   const res = await fetch("https://REGION-PROJECT_ID.cloudfunctions.net/YOUR_FUNCTION_NAME", {

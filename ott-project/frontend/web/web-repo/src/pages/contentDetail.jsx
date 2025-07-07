@@ -57,8 +57,19 @@ function ContentDetail() {
     if (!newComment.trim()) return;
 
     try {
-      const res = await axios.post(`${apiUrl}/comments/`, 
-        { comment: newComment, content_id: id, nickname: "바비", subscription_id: 1 },
+      const subInfo = await axios.get(`${apiUrl}/subscribe/me`, {
+        withCredentials: true,
+      });
+      const subscription_id = subInfo.data.id;
+
+      const res = await axios.post(
+        `${apiUrl}/comments/`,
+        {
+          comment: newComment,
+          content_id: id,
+          nickname: "바비",
+          subscription_id,
+        },
         { withCredentials: true, credentials: "include" }
       );
 
