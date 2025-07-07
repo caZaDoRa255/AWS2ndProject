@@ -18,7 +18,8 @@ jobs:
       run: |
         cd lambda-build
         docker build -t lambda-builder .
-        docker run --rm -v $PWD:/out lambda-builder cp /lambda_function.zip /out/
+        docker run --rm -v $PWD:/out --entrypoint "/bin/bash" lambda-builder -c "cp /lambda_function.zip /out/"
+        
 
     - name: Upload to S3
       env:

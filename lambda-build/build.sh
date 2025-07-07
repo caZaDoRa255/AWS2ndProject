@@ -11,7 +11,11 @@ echo "🚀 Docker 이미지 빌드 중..."
 docker build -t lambda-builder .
 
 echo "📦 zip 추출 중..."
-docker run --rm -v "$DIR":/out lambda-builder cp /lambda_function.zip /out/
+docker run --rm -v "$DIR":/out --entrypoint "/bin/bash" lambda-builder -c "cp /lambda_function.zip /out/"
+# --entrypoint 옵션을 추가하여 이미지의 기본 ENTRYPOINT를 무시하고 bash를 실행
+# -c는 bash 명령어를 직접 실행하기 위한 옵션
+# ENTRYPOINT는 Dockerfile 명령어 중 하나로, 컨테이너가 시작될 때 항상 실행될 명령을 설정 
+# 마치 운영체제의 부팅 스크립트나 프로그램의 메인 함수와 같음
 
 echo "✅ 빌드 완료: $DIR/lambda_function.zip"
 
