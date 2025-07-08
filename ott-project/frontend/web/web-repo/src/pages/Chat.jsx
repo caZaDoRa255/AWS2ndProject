@@ -1,14 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import '../style/Chat.css'; // Import the new CSS file
 
 function Chatbot() {
   const [message, setMessage] = useState('');
-  const [response, setResponse] = useState(null);
+  const [chatHistory, setChatHistory] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const apiUrl = import.meta.env.VITE_API_URL;
+  const messagesEndRef = useRef(null);
 
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [chatHistory]);
 
   const handleSend = async () => {
+    if (!message.trim()) return;
+
+    const userMessage = { type: 'user', text: message };
+    setChatHistory(prev => [...prev, userMessage]);
+    setMessage('');
+    setIsLoading(true);
+
     try {
-      const res = await fetch(`${apiUrl}/chatbot`, {
+      const res = await fetch(`${apiUrl}/lab_chatbot`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -17,76 +34,74 @@ function Chatbot() {
         body: JSON.stringify({ message }),
       });
 
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
       const data = await res.json();
-      setResponse(data); // 서버 응답 저장
+      const modelMessage = { type: 'model', text: data.response || "No response from model." };
+      setChatHistory(prev => [...prev, modelMessage]);
+
     } catch (error) {
-      console.error('오류 발생:', error);
-      setResponse({ error: '서버 오류' });
+      console.error('Error sending message:', error);
+      const errorMessage = { type: 'model', text: `Error: ${error.message}` };
+      setChatHistory(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
     }
   };
 
   const markdownToHtml = (text) => {
     if (!text) return '';
-
     let html = text;
     html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/\n/g, '<br>');
-
-    const lines = html.split('<br>');
-    let inList = false;
-    let converted = [];
-
-    for (let line of lines) {
-      if (/^\d+\.\s/.test(line)) {
-        if (!inList) {
-          converted.push('<ol>');
-          inList = true;
-        }
-        const item = line.replace(/^\d+\.\s/, '');
-        converted.push(`<li>${item}</li>`);
-      } else {
-        if (inList) {
-          converted.push('</ol>');
-          inList = false;
-        }
-        converted.push(`<p>${line}</p>`);
-      }
-    }
-
-    if (inList) converted.push('</ol>');
-
-    return converted.join('');
+    return html;
   };
-  //이게 아마 마크다운 --> html로 바꾸는 자바스크립트.
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1>Chatbot</h1>
-      <input
-        type="text"
-        placeholder="메시지를 입력하세요"
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        style={{ width: '300px', marginRight: '1rem' }}
-      />
-      <button onClick={handleSend}>보내기</button>
-
-      <div
-        style={{
-           marginTop: '2rem',
-           backgroundColor: '#f5f5f5',
-           padding: '1rem',
-           borderRadius: '4px',
-           color: 'black' // ✅ 여기에 추가
-        }}
-      >
-        <strong>응답:</strong>
-        <div
-          dangerouslySetInnerHTML={{
-            __html: response?.reply ? markdownToHtml(response.reply) : '응답 없음',
-          }}
-        />
+    <div className="chat-container-gemini">
+      <header className="chat-header-gemini">
+        <h1>Moodly Chat</h1>
+      </header>
+      <div className="chat-messages-gemini">
+        {chatHistory.map((msg, index) => (
+          <div key={index} className={`message-gemini ${msg.type}-gemini`}>
+            <div dangerouslySetInnerHTML={{ __html: markdownToHtml(msg.text) }} />
+          </div>
+        ))}
+        {isLoading && (
+          <div className="message-gemini model-gemini">
+            <span>Thinking...</span>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
       </div>
+      <footer className="chat-input-form-gemini">
+        <input
+          type="text"
+          className="chat-input-gemini"
+          placeholder="Enter your message..."
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyPress={handleKeyPress}
+          disabled={isLoading}
+        />
+        <button
+          className="chat-submit-button-gemini"
+          onClick={handleSend}
+          disabled={isLoading}
+        >
+          <span>&#10148;</span>
+        </button>
+      </footer>
     </div>
   );
 }
