@@ -95,7 +95,7 @@ function App() {
         <Route path="/chat" element={<Chat />} />
         <Route path="/Sub" element={<Sub />} />
         <Route path="/upload" element={<Upload />} />
-        <Route path="/stream" element={<Stream />} />
+        <Route path="/stream/:videoId" element={<Stream />} />
         <Route path="/search" element={<Search />} />
         
         <Route path="/content/:id" element={<ContentDetail />} />

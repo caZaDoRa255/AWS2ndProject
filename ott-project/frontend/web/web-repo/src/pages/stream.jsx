@@ -1,16 +1,48 @@
 import { useRef, useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import "../style/stream.css";
-// 테스트용으로 만듬. 나중에 쓸지도?
+
 function VideoPlayer() {
+  const { videoId } = useParams(); // Get videoId from URL
   const videoRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(1);
   const [progress, setProgress] = useState(0);
+  const [videoUrl, setVideoUrl] = useState("");
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const video = videoRef.current;
     if (video) video.volume = volume;
   }, [volume]);
+
+  useEffect(() => {
+    const fetchVideoUrl = async () => {
+      if (!videoId) {
+        console.log("No video ID in URL");
+        return;
+      }
+      try {
+        const response = await fetch(`${apiUrl}/history/${videoId}/url`, {
+          method: 'Get',
+          credentials: "include" // ⚠️ 쿠키 포함 필수!
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        if (data.stream_url) {
+          setVideoUrl(data.stream_url);
+        } else {
+          throw new Error("No stream_url in response data");
+        }
+      } catch (error) {
+        console.error("Error fetching video URL:", error);
+      }
+    };
+
+    fetchVideoUrl();
+  }, [apiUrl, videoId]); // Add videoId to dependency array
 
   const togglePlay = () => {
     const video = videoRef.current;
@@ -59,16 +91,21 @@ function VideoPlayer() {
     <div className="video-container">
       <h1 className="stream-title">🎬 Moodly Video Stream</h1>
 
-      <video
-        ref={videoRef}
-        src="/videos/Popeye_forPresident_512kb.mp4"
-        controls={false}
-        preload="auto"
-        width="800"
-        onTimeUpdate={handleTimeUpdate}
-      >
-        죄송합니다. 사용자의 브라우저는 video 태그를 지원하지 않습니다.
-      </video>
+      {videoUrl ? (
+        <video
+          ref={videoRef}
+          src={videoUrl}
+          controls={false}
+          preload="auto"
+          width="800"
+          onTimeUpdate={handleTimeUpdate}
+          autoPlay
+        >
+          죄송합니다. 사용자의 브라우저는 video 태그를 지원하지 않습니다.
+        </video>
+      ) : (
+        <p>Loading video for ID: {videoId}...</p>
+      )}
 
       <div className="video-controls">
         <input
