@@ -1,18 +1,25 @@
 from pydantic import BaseModel, field_validator
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Optional, Field
 from app.db.base import Base
 
 # 운영자 콘텐츠 등록 후 반환하는 응답 모델
 class ContentResponse(BaseModel):
     id: int
     title: str
-    description: str
-    category: str
-    year: int
+    description: Optional[str] # ✅ Optional로 변경
+    category: Optional[str] # ✅ Optional로 변경
+    year: Optional[int] # ✅ Optional로 변경
+    thumbnail_url: Optional[str]
 
     class Config:
         from_attributes = True
 
+# 썸네일콜백 응답모델
+class ContentUpdateThumbnailCallback(BaseModel): 
+    content_id: int
+    s3_original_key: str
+    s3_thumbnail_key: str
+    secret: str
 
 # 🔸 SQLAlchemy: DB 테이블용, = DB 객체
 class Content(Base):
@@ -22,15 +29,16 @@ class Content(Base):
     description = Column(String(500))
     category = Column(String(100))
     year = Column(Integer)
+    thumbnail_url = Column(String(255), nullable=True) #추가
 
 # 🔸 Pydantic: API 요청/응답 검증용, = API에 주고받는 JSON 구조
 class ContentCreate(BaseModel):
-    # id: int #필요하면 str로 바꾸면된다
-    title: str
-    description: str
-    category: str
-    year: int
-    # image_url: str = ""  # ✅ 테스트용 기본값 (DB에는 없어도 됨) -없어도됨
+    # id: int #필요하면 str로 바꾸면된다,id 안써도됨
+    title: str = Field(..., max_length=255)
+    description: Optional[str] = Field(None, max_length=500) # ✅ Optional로 변경
+    category: Optional[str] = Field(None, max_length=100) # ✅ Optional로 변경
+    year: Optional[int] = None
+    # image_url: str = ""  # ✅ 테스트용 기본값 -없어도됨
 
     #  필드 공백 제거(여기서 해주는게 유지보수 쉬움)
     @field_validator("title", "description", "category", mode="before")

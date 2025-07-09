@@ -27,7 +27,7 @@ def add_favorite(db: Session, user_id: int, content_id: int) -> FavoriteCreate:
         user_id=new_favorite.user_id,
         content_id=new_favorite.content_id,
         title=content.title,
-        image_url=getattr(content, "image_url", "")  # 오류 방지용
+        thumbnail_url=getattr(content, "thumbnail_url", "")  # 오류 방지용
     )
 
 # ✅ 찜 삭제
@@ -50,7 +50,7 @@ def get_favorites(db: Session, user_id: int) -> List[FavoriteCreate]:
                 user_id=user_id,
                 content_id=content.id,
                 title=content.title,
-                image_url=getattr(content, "image_url", "")  # 👈 프론트에서 썸네일로 사용
+                thumbnail_url=getattr(content, "thumbnail_url", "")  # 👈 프론트에서 썸네일로 사용
             ))
     return result
 # 이미지url이 빈칸일 경우 프론트가 고려해야할점! 

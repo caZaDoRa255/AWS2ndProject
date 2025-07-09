@@ -1,7 +1,6 @@
 from typing import List, Optional
 from sqlalchemy.orm import Session
-from app.models.contents import Content  # SQLAlchemy ORM 모델
-from app.models.contents import ContentCreate  # Pydantic 응답용
+from app.models.contents import Content, ContentCreate 
 from sqlalchemy import or_, func
 
 

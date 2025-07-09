@@ -21,7 +21,7 @@ class FavoriteCreate(BaseModel):
     user_id: int  #내부에서 쓰는 DB의 고유번호
     content_id: int
     title: str
-    image_url: str  # 썸네일 이미지 URL, 찜 응답에 필요하니 꼭 있어야 함
+    thumbnail_url: str  # 썸네일 이미지 URL, 찜 응답에 필요하니 꼭 있어야 함
 
     class Config:
         from_attributes = True

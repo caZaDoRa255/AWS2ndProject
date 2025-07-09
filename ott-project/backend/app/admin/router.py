@@ -4,10 +4,10 @@ from app.db.session import get_db
 from app.models.user import User , LoginRequest, TokenResponse
 from app.auth.utils import verify_password, create_access_token  # 암호 비교 & 토큰 생성 함수
 
-from app.models.contents import ContentCreate, ContentResponse, Content
+from app.models.contents import ContentCreate, ContentResponse, Content, ContentUpdateThumbnailCallback
 from app.admin.service import create_content, create_subscription_plan
 from app.auth.utils import get_current_user
-
+from app.contents.crud import create_content_record, get_content_by_id, update_content_thumbnail 
 from app.models.subscription import SubscriptionPlanCreate, SubscriptionPlanResponse, SubscriptionPlan
 
 import boto3
@@ -16,13 +16,15 @@ import logging
 
 import uuid
 from pytube import YouTube
+from mimetypes import guess_type
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
 # s3 설정값
 AWS_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-BUCKET_NAME = "ott-project-video-storage-team4-ott-project"
+BUCKET_NAME_IMAGES = "image-storage-team4-ott-project"
+BUCKET_NAME_VIDEOS = "ott-project-video-storage-team4-ott-project"
 REGION = "ap-northeast-2"
 
 s3_client = boto3.client(
@@ -31,6 +33,9 @@ s3_client = boto3.client(
     aws_access_key_id=AWS_ACCESS_KEY,
     aws_secret_access_key=AWS_SECRET_KEY
 )
+
+# 람다 시크릿은 기존 .env의 SECRET_KEY 환경 변수에서 로드
+LAMBDA_CALLBACK_SECRET = os.getenv("SECRET_KEY")
 
 # ✅ 로그 설정 (클라우드와치)
 logging.basicConfig(
@@ -49,6 +54,109 @@ logger = logging.getLogger(__name__)
 # %(asctime)s	  로그 발생 시간 (예: 2025-06-27 22:12:45)
 # %(levelname)s	  로그 레벨 (INFO, ERROR, WARNING 등)
 # %(message)s	  네가 logger로 남기는 진짜 메시지 ("[스트리밍 실패] content_id=5..." 등)
+
+# 이미지 업로드용 Presigned URL 발급
+@router.post("/images/upload-url", response_model=ContentResponse)
+def generate_image_upload_url(
+    content_data: ContentCreate = Depends(), # 제목, 설명, 카테고리, 연도를 받음
+    filename: str = Form(..., description="업로드할 원본 이미지 파일 이름 (예: my_image.jpg)"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user) # 관리자 인증
+):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="운영자만 접근 가능합니다")
+
+    try:
+        # 파일 확장자 추출
+        file_extension = os.path.splitext(filename)[1] # 예: ".jpg", ".png"
+        # UUID를 사용하여 유니크한 파일 이름 생성
+        # 이렇게 하면 같은 이름의 파일을 여러 번 업로드해도 덮어쓰지 않고 새로운 파일로 저장
+        unique_s3_id = str(uuid.uuid4())
+        
+
+        # S3에 저장될 Key 정의
+        # 람다 트리거의 filter_prefix인 "uploads/"와 일치해야함
+        s3_original_key = f"uploads/{unique_s3_id}{file_extension}"
+
+        # 파일 확장자를 기반으로 Content-Type 유추
+        # S3에 올바른 Content-Type으로 저장되어야 웹 브라우저에서 올바르게 표시됩니다.
+        guessed_content_type = guess_type(filename)[0] # 예: 'image/jpeg', 'image/png'
+        # 유추 실패 시 기본값 (안전한 바이너리 스트림)
+        final_content_type = guessed_content_type if guessed_content_type else 'application/octet-stream'
+
+        # DB에 콘텐츠 레코드 미리 생성 (S3 업로드 전)
+        new_content_record = create_content_record(
+            db=db,
+            content_data=content_data,
+            #s3_original_key=s3_original_key ->여기주석처리하기
+        )
+        content_id_from_db = new_content_record.id
+
+        # S3 Presigned URL 발급
+        url = s3_client.generate_presigned_url(
+            ClientMethod='put_object',
+            Params={
+                'Bucket': BUCKET_NAME_IMAGES,
+                'Key': s3_original_key,
+                'ContentType': final_content_type, # 유추된 Content-Type 사용
+                'Metadata': {
+                    'content-id': str(content_id_from_db) # DB ID를 S3 메타데이터로 저장
+                }
+            },
+            ExpiresIn=3600 # 1시간 유효
+        )
+
+        logger.info(f"[관리자 presigned 이미지 URL 발급] key={s3_original_key}, admin_id={current_user.id}, content_type={final_content_type},content_id={content_id_from_db}")
+        # Pydantic ContentResponse 스키마에 맞춰 응답 데이터 준비
+        response_data = new_content_record.__dict__.copy() # .copy()를 사용하여 원본 객체 영향 방지
+        response_data["upload_url"] = url # 클라이언트에게 업로드 URL 제공
+        response_data["s3_original_key"] = s3_original_key # 클라이언트에게 S3 원본 키 제공
+
+        if '_sa_instance_state' in response_data:
+            del response_data['_sa_instance_state'] # SQLAlchemy 내부 상태 정보 제거
+
+        return ContentResponse(**response_data) # Pydantic ContentResponse로 반환
+
+    except Exception as e:
+        logger.error(f"[이미지 presigned URL 발급 실패] admin_id={current_user.id}, error={str(e)}")
+        raise HTTPException(status_code=500, detail="이미지 URL 발급에 실패했습니다.")
+    
+# 람다 썸네일 콜백을 받을 새로운 API 엔드포인트
+@router.post("/internal/assets/thumbnail_callback", status_code=200)
+def receive_thumbnail_callback(
+    callback_data: ContentUpdateThumbnailCallback = Depends(), # Pydantic 스키마를 통해 데이터 수신
+    db: Session = Depends(get_db)
+):
+    # 콜백 인증 로직
+    if not LAMBDA_CALLBACK_SECRET or callback_data.secret != LAMBDA_CALLBACK_SECRET:
+        logger.error(f"[썸네일 콜백] Content ID: {callback_data.content_id}에 대한 권한 없는 접근 시도")
+        raise HTTPException(status_code=401, detail="Unauthorized callback.")
+
+    try:
+        # app/crud/content.py의 get_content_by_id 함수 사용
+        content_record = get_content_by_id(db=db, content_id=callback_data.content_id)
+        if not content_record:
+            logger.warning(f"[썸네일 콜백] DB에서 Content ID를 찾을 수 없음: {callback_data.content_id}")
+            raise HTTPException(status_code=404, detail="Content not found.")
+
+        full_thumbnail_url = f"s3://{BUCKET_NAME_IMAGES}/{callback_data.s3_thumbnail_key}"
+        updated_content = update_content_thumbnail(
+            db=db,
+            content_id=callback_data.content_id,
+            thumbnail_url=full_thumbnail_url
+        )
+        if not updated_content:
+            logger.error(f"[썸네일 콜백] Content ID: {callback_data.content_id}의 thumbnail_url 업데이트 실패")
+            raise HTTPException(status_code=500, detail="Failed to update thumbnail URL.")
+
+        logger.info(f"[썸네일 콜백 수신 및 처리 완료] Content ID: {callback_data.content_id}, 원본 키: {callback_data.s3_original_key}, 썸네일 키: {callback_data.s3_thumbnail_key}")
+        return {"message": "Thumbnail callback received and processed successfully."}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[썸네일 콜백 처리 실패] Content ID: {callback_data.content_id}, 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to process thumbnail callback.")    
 
 #  다운로드 폴더
 DOWNLOAD_DIR = "backend/downloads"  #다운로드 실행 시 한번만 실행
@@ -139,7 +247,7 @@ def generate_upload_url(
         #관리자가 어떤 영상이름으로 올리든(예:미니언즈.mp4) s3에는 영상이름이 video/1.mp4 이런식으로 저장됨
         url = s3_client.generate_presigned_url(
             ClientMethod='put_object',
-            Params={'Bucket': BUCKET_NAME, 'Key': key, 'ContentType': 'video/mp4'},
+            Params={'Bucket': BUCKET_NAME_VIDEOS, 'Key': key, 'ContentType': 'video/mp4'},
             ExpiresIn=3600  #1시간 사용가능 , 이 시간 내에 업로드(PUT 요청)해야함
         )
         logger.info(f"[관리자 presigned URL 발급] video_id={video_id}, key={key}, admin_id={current_user.id}")

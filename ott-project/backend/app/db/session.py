@@ -6,10 +6,10 @@ from dotenv import load_dotenv
 
 # # ✔️ 너가 사용할 DB URL로 수정할 것!
 # SQLALCHEMY_DATABASE_URL = "sqlite:///backend/app.db"
-# # 예시: "mysql+pymysql://user:password@localhost/dbname"
-# # 예시: "postgresql://user:password@localhost/dbname"
+# # # 예시: "mysql+pymysql://user:password@localhost/dbname"
+# # # 예시: "postgresql://user:password@localhost/dbname"
 
-# # SQLite일 경우는 이 옵션 필요
+# # # SQLite일 경우는 이 옵션 필요
 # engine = create_engine(
 #     SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
 # )
