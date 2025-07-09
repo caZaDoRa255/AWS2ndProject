@@ -20,12 +20,13 @@ def lambda_handler(event, context):
     s3_original_key = urllib.parse.unquote_plus(event['Records'][0]['s3']['object']['key'])
     
     print(f"Processing file: s3://{bucket}/{s3_original_key}")
-    
-    # /tmp 경로에 다운로드 (/tmp 경로는 Lambda에서 유일하게 쓰기 가능한 디렉토리)
-    download_path = '/tmp/original'
-    upload_path = '/tmp/thumbnail'
 
     file_extension = os.path.splitext(s3_original_key)[1]
+    
+    # /tmp 경로에 다운로드 (/tmp 경로는 Lambda에서 유일하게 쓰기 가능한 디렉토리)
+    download_path = f'/tmp/original{file_extension}' # 예: /tmp/original.jpg
+    upload_path = f'/tmp/thumbnail{file_extension}'   # 예: /tmp/thumbnail.jpg
+
 
     thumbnail_unique_id = s3_original_key.split('/')[-1].split('.')[0]
     s3_thumbnail_key = f"thumbnails/{thumbnail_unique_id}{file_extension}"
