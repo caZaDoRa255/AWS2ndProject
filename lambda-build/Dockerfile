@@ -21,6 +21,7 @@ RUN yum install -y \
     && rm -rf /var/cache/yum
 
 WORKDIR /var/task
+# 여기서부터 컨테이너의 작업 디렉토리가 /var/task가 됩니다
 
 # requirements.txt 파일이 있다면 먼저 COPY합니다.
 COPY requirements.txt .
@@ -38,4 +39,5 @@ RUN find . -type f -name "*.pyc" -delete && \
 
 # lambda_function.zip 생성 (도커 이미지 자체가 아니라 zip 파일을 S3에 올리는 용도)
 # WORKDIR이 /var/task 이므로, 여기서 바로 압축하면 됩니다.
+# /var/task의 내용물들을 압축하여 /lambda_function.zip 파일을 생성하게 되는 것
 RUN zip -r /lambda_function.zip .
