@@ -32,16 +32,22 @@ def lambda_handler(event, context):
     s3_thumbnail_key = f"thumbnails/{thumbnail_unique_id}{file_extension}"
     
     try:
+        print("Downloading file from S3...")
         s3.download_file(bucket, s3_original_key, download_path)
+        print("Download complete.")
 
         # 이미지 처리
+        print("Opening image...")
         with Image.open(download_path) as img:
         # 크기 조정 (예: 200x200으로 크롭)
           img.thumbnail((200, 200))
           img.save(upload_path)
+        print("Image processing complete.")
     
         # S3에 업로드
-        s3.upload_file(upload_path + file_extension, bucket, s3_thumbnail_key)
+        s3.upload_file(upload_path , bucket, s3_thumbnail_key)
+        print("Upload complete.")
+        # + file_extension : 이게 있으면 이미지.jpg.jpg 이렇게 될수있어서 일단 삭제
         print(f"Thumbnail saved at: s3://{bucket}/{s3_thumbnail_key}")
 
         # --- S3 객체 메타데이터에서 Content ID 가져오기 ---
@@ -61,7 +67,10 @@ def lambda_handler(event, context):
             "secret": LAMBDA_CALLBACK_SECRET # 보안을 위한 공유 시크릿 키
         }
 
-        response = requests.post(callback_url, data=payload)
+        print(f"Calling FastAPI callback at {callback_url}...")
+        response = requests.post(callback_url, data=payload, timeout=10)
+        # , timeout=10 추가함
+        print(f"Callback response: {response.status_code} {response.text}")
         response.raise_for_status() # HTTP 오류 발생 시 예외 처리
 
         print(f"FastAPI로 콜백 성공: {response.status_code} - {response.text}")
