@@ -6,10 +6,10 @@ output "node_group_name" {
   value = aws_eks_node_group.ott_node_group.node_group_name
 }
 
-output "rds_sg_id" {
-  description = "ID of RDS MySQL Security Group"
-  value       = aws_security_group.rds_mysql_sg.id
-}
+# output "rds_sg_id" {
+#   description = "ID of RDS MySQL Security Group"
+#   value       = aws_security_group.rds_mysql_sg.id
+# }
 
 output "vpc_id" {
   value = module.vpc.vpc_id
@@ -36,4 +36,20 @@ output "alb_dns_name" {
 output "alb_zone_id" {
   value = aws_lb.harbor_alb.zone_id
   description = "The Route 53 zone ID of the ALB"
+}
+
+# React 앱 관련 출력
+output "react_alb_dns_name" {
+  description = "React 앱 ALB DNS 이름"
+  value       = aws_lb.web.dns_name
+}
+
+output "react_app_url" {
+  description = "React 앱 접속 URL"
+  value       = "https://frontend.moodlyharbor.link"
+}
+
+output "fastapi_backend_private_ip" {
+  description = "The private IP address of the FastAPI backend VM."
+  value       = var.gcp_fastapi_private_ip
 }

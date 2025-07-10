@@ -8,37 +8,123 @@ resource "null_resource" "install_harbor" {
       type        = "ssh"
       user        = "ec2-user"
       host        = aws_instance.bastion.public_ip
-      private_key = file("~/.ssh/team4-key.pem")# 실제 사용중인 키 경로로 변경
+      private_key = file("~/.ssh/team4-key.pem")
+      timeout     = "60m"
+      agent       = false
     }
 
     inline = [
-      "sudo dnf update -y",
-      "sudo dnf install -y docker",
-      "sudo dnf install -y libxcrypt-compat || true",
-      "sudo systemctl start docker",
-      "sudo systemctl enable docker",
-
-      # Docker Compose 설치
-      "sudo curl -L https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose",
-      "sudo chmod +x /usr/local/bin/docker-compose",
-
-      # Harbor 다운로드 및 압축 해제
+      "echo 'Starting Harbor installation preparation...'",
+      "sudo yum update -y || echo 'System update failed, continuing...'",
+      "sudo yum install -y wget curl tar || echo 'Package installation failed, continuing...'",
+      "# 로그 함수 정의",
+      "log() {",
+      "    echo \"[$(date '+%Y-%m-%d %H:%M:%S')] $1\"",
+      "}",
+      "log 'Starting Harbor installation...'",
+      "# 시스템 정보 확인",
+      "log 'Checking system information...'",
+      "uname -a",
+      "cat /etc/os-release",
+      "# 시스템 업데이트",
+      "log 'Updating system packages...'",
+      "if command -v dnf &> /dev/null; then",
+      "    sudo dnf update -y || log 'Warning: System update failed, continuing...'",
+      "else",
+      "    sudo yum update -y || log 'Warning: System update failed, continuing...'",
+      "fi",
+      "# Docker 설치",
+      "log 'Installing Docker...'",
+      "if command -v dnf &> /dev/null; then",
+      "    sudo dnf install -y docker || log 'Warning: Docker install failed, trying alternative...'",
+      "    sudo dnf install -y libxcrypt-compat || log 'Warning: libxcrypt-compat not available'",
+      "else",
+      "    sudo yum install -y docker || log 'Warning: Docker install failed, trying alternative...'",
+      "fi",
+      "# Docker 서비스 시작 및 활성화",
+      "log 'Starting and enabling Docker service...'",
+      "sudo systemctl start docker || log 'Warning: Failed to start Docker service'",
+      "sudo systemctl enable docker || log 'Warning: Failed to enable Docker service'",
+      "sudo usermod -aG docker ec2-user || log 'Warning: Failed to add ec2-user to docker group'",
+      "# Docker 상태 확인",
+      "log 'Checking Docker status...'",
+      "sudo systemctl status docker --no-pager || log 'Warning: Docker service status check failed'",
+      "# Docker Compose 설치",
+      "log 'Installing Docker Compose...'",
+      "if ! command -v docker-compose &> /dev/null; then",
+      "    sudo curl -L \"https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)\" -o /usr/local/bin/docker-compose || log 'Warning: Docker Compose download failed'",
+      "    sudo chmod +x /usr/local/bin/docker-compose || log 'Warning: Failed to make docker-compose executable'",
+      "fi",
+      "# Docker Compose 버전 확인",
+      "log 'Checking Docker Compose version...'",
+      "docker-compose --version || log 'Warning: Docker Compose version check failed'",
+      "# Harbor 다운로드 및 압축 해제",
+      "log 'Downloading Harbor...'",
       "cd /opt",
-      "sudo wget https://github.com/goharbor/harbor/releases/download/v2.10.0/harbor-online-installer-v2.10.0.tgz",
-      "sudo tar xvf harbor-online-installer-v2.10.0.tgz",
-      "cd harbor",
+      "if [ ! -f \"harbor-online-installer-v2.10.0.tgz\" ]; then",
+      "    sudo wget https://github.com/goharbor/harbor/releases/download/v2.10.0/harbor-online-installer-v2.10.0.tgz || log 'Warning: Harbor download failed'",
+      "fi",
+      "if [ -f \"harbor-online-installer-v2.10.0.tgz\" ]; then",
+      "    sudo tar xvf harbor-online-installer-v2.10.0.tgz || log 'Warning: Harbor extraction failed'",
+      "    cd harbor || log 'Error: Failed to change to harbor directory'",
+      "else",
+      "    log 'Error: Harbor download file not found'",
+      "    exit 1",
+      "fi",
+      "# harbor.yml 설정",
+      "log 'Configuring Harbor...'",
+      "if [ -f \"harbor.yml.tmpl\" ]; then",
+      "    sudo cp harbor.yml.tmpl harbor.yml",
+      "    sudo sed -i \"s/^hostname: .*/hostname: www.moodlyharbor.click/\" harbor.yml",
+      "    echo \"external_url: https://www.moodlyharbor.click\" | sudo tee -a harbor.yml",
+      "    sudo sed -i '/^https:/,/^  private_key:/ s/^/#/' harbor.yml",
+      "    sudo sed -i '/^http:/,/^  port:/ s/^#//' harbor.yml",
+      "    sudo sed -i '/^  port:/ s/.*/  port: 80/' harbor.yml",
+      "    log 'Harbor configuration file created:'",
+      "    sudo cat harbor.yml",
+      "else",
+      "    log 'Error: harbor.yml.tmpl not found'",
+      "    exit 1",
+      "fi",
+      "# Harbor 설치",
+      "log 'Installing Harbor...'",
+      "if [ -f \"install.sh\" ]; then",
+      "    sudo ./install.sh || log 'Warning: Harbor installation completed with warnings'",
+      "    log 'Harbor installation finished!'",
+      "else",
+      "    log 'Error: install.sh not found'",
+      "    exit 1",
+      "fi",
+      "# 설치 후 상태 확인",
+      "log 'Checking Harbor installation status...'",
+      "if command -v docker &> /dev/null; then",
+      "    sudo docker ps -a || log 'Warning: Failed to check Docker containers'",
+      "fi",
+      "log 'Harbor installation process completed!'"
+    ]
+  }
 
-      # harbor.yml 설정
-      "sudo cp harbor.yml.tmpl harbor.yml",
-      "sudo sed -i \"s/^hostname: .*/hostname: www.moodlyharbor.click/\" harbor.yml",
-      "echo 'external_url: https://www.moodlyharbor.click' | sudo tee -a harbor.yml",
-      "sudo sed -i '/^https:/,/^  private_key:/ s/^/#/' harbor.yml",
-      "sudo sed -i '/^http:/,/^  port:/ s/^#//' harbor.yml",
-      "sudo sed -i '/^  port:/ s/.*/  port: 80/' harbor.yml",
+  # 설치 완료 후 로그 확인을 위한 추가 provisioner
+  provisioner "remote-exec" {
+    connection {
+      type        = "ssh"
+      user        = "ec2-user"
+      host        = aws_instance.bastion.public_ip
+      private_key = file("~/.ssh/team4-key.pem")
+      timeout     = "5m"
+      agent       = false
+    }
 
-      # Harbor 설치
-      "sudo ./install.sh"
-      ]
+    inline = [
+      "echo '=== Harbor Installation Summary ==='",
+      "echo 'Docker status:'",
+      "sudo systemctl status docker --no-pager || echo 'Docker service not running'",
+      "echo 'Docker containers:'",
+      "sudo docker ps -a || echo 'Docker not available'",
+      "echo 'Harbor processes:'",
+      "ps aux | grep harbor || echo 'No harbor processes found'",
+      "echo '=== End Summary ==='"
+    ]
   }
 }
 

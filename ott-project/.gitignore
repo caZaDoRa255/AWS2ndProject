@@ -2,8 +2,12 @@
 .terraform/
 *.tfstate
 *.tfstate.backup
+*.tfstate.*.backup
 
 # Secrets & Keys
 *.pem
 .env
 secrets/
+terraform.tfvars
+*.tfvars
+!example.tfvars

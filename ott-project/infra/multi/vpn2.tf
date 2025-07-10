@@ -3,7 +3,7 @@
 provider "google" {
   credentials = file("C:/Users/sol/.gcp/ott-project-462006-20d0a27f8660.json")
   project     = "ott-project-462006"
-  region      = "asia-northeast3"
+  region      = "us-central1"
   alias       = "gcp"
 }
 
@@ -16,24 +16,15 @@ provider "aws" {
   
 }
 
-
-# data "aws_vpc" "ott_project" {
-#   provider = aws.aws
-#   filter {
-#     name   = "tag:Name"
-#     values = ["ott-project-vpc"]
-#   }
-#   filter {
-#     name   = "state"
-#     values = ["available"]
-#   }
-# }
-
 # VPC ID를 직접 지정 (여러 VPC가 있을 때)
 data "aws_vpc" "ott_project" {
   provider = aws.aws
-  id = "vpc-0b77da45c895e6b23"  # 실제 VPC ID로 변경 필요
+  filter {
+    name   = "tag:Name"
+    values = ["ott-project-vpc"]
+  }
 }
+
 
 data "google_compute_network" "custom_vpc" {
   provider = google.gcp
@@ -45,13 +36,13 @@ data "google_compute_network" "custom_vpc" {
 resource "google_compute_address" "vpn_ip_0" {
   provider = google.gcp
   name   = "vpn-ip-0"
-  region = "asia-northeast3"
+  region = "us-central1"
 }
 
 resource "google_compute_address" "vpn_ip_1" {
   provider = google.gcp
   name   = "vpn-ip-1"
-  region = "asia-northeast3"
+  region = "us-central1"
 }
 
 
@@ -60,7 +51,7 @@ resource "google_compute_address" "vpn_ip_1" {
 resource "google_compute_router" "router" {
   provider = google.gcp
   name    = "cloud-router"
-  region  = "asia-northeast3"
+  region  = "us-central1"
   network = data.google_compute_network.custom_vpc.id
   bgp {
     asn = 64514
@@ -71,14 +62,14 @@ resource "google_compute_ha_vpn_gateway" "vpn_gateway" {
   provider = google.gcp
   name    = "ha-vpn-gateway"
   network = data.google_compute_network.custom_vpc.id
-  region  = "asia-northeast3"
+  region  = "us-central1"
 }
 ##### aws 시작 ######
 
 resource "aws_customer_gateway" "gcp_1" {
   provider = aws.aws
   bgp_asn    = 64514 # GCP 쪽 Cloud Router ASN
-  ip_address = "34.152.96.96" # 강제 주입 ip
+  ip_address = "34.128.34.28" # 강제 주입 ip
   type       = "ipsec.1"
   tags = {
     Name = "GCP-Customer-Gateway-1"
@@ -88,7 +79,7 @@ resource "aws_customer_gateway" "gcp_1" {
 resource "aws_customer_gateway" "gcp_2" {
   provider = aws.aws
   bgp_asn    = 64514 # GCP 쪽 Cloud Router ASN
-  ip_address = "34.177.64.175" # 강제 주입 ip
+  ip_address = "34.153.246.253" # 강제 주입 ip
   type       = "ipsec.1"
   tags = {
     Name = "GCP-Customer-Gateway-2"
@@ -176,11 +167,11 @@ resource "google_compute_external_vpn_gateway" "aws_gateway" {
 
 
 
-######################################################### 터널 만들기 gcp
+######################################################## 터널 만들기 gcp
 resource "google_compute_vpn_tunnel" "tunnel1a" {
   provider                        = google.gcp
   name                            = "gcp-to-aws-tunnel-1a"
-  region                          = "asia-northeast3"
+  region                          = "us-central1"
   vpn_gateway                     = google_compute_ha_vpn_gateway.vpn_gateway.id
   vpn_gateway_interface           = 0
   peer_external_gateway           = google_compute_external_vpn_gateway.aws_gateway.id
@@ -195,7 +186,7 @@ resource "google_compute_vpn_tunnel" "tunnel1a" {
 resource "google_compute_vpn_tunnel" "tunnel1b" {
   provider                        = google.gcp
   name                            = "gcp-to-aws-tunnel-1b"
-  region                          = "asia-northeast3"
+  region                          = "us-central1"
   vpn_gateway                     = google_compute_ha_vpn_gateway.vpn_gateway.id
   vpn_gateway_interface           = 0
   peer_external_gateway           = google_compute_external_vpn_gateway.aws_gateway.id
@@ -207,11 +198,10 @@ resource "google_compute_vpn_tunnel" "tunnel1b" {
   depends_on = [aws_vpn_connection.vpn_1]
 }
 
-
 resource "google_compute_vpn_tunnel" "tunnel2a" {
   provider                        = google.gcp
   name                            = "gcp-to-aws-tunnel-2a"
-  region                          = "asia-northeast3"
+  region                          = "us-central1"
   vpn_gateway                     = google_compute_ha_vpn_gateway.vpn_gateway.id
   vpn_gateway_interface           = 1
   peer_external_gateway           = google_compute_external_vpn_gateway.aws_gateway.id
@@ -223,11 +213,10 @@ resource "google_compute_vpn_tunnel" "tunnel2a" {
   depends_on = [aws_vpn_connection.vpn_2]
 }
 
-
 resource "google_compute_vpn_tunnel" "tunnel2b" {
   provider                        = google.gcp
   name                            = "gcp-to-aws-tunnel-2b"
-  region                          = "asia-northeast3"
+  region                          = "us-central1"
   vpn_gateway                     = google_compute_ha_vpn_gateway.vpn_gateway.id
   vpn_gateway_interface           = 1
   peer_external_gateway           = google_compute_external_vpn_gateway.aws_gateway.id
@@ -240,17 +229,17 @@ resource "google_compute_vpn_tunnel" "tunnel2b" {
 }
 
 
-##################################################################################
+#################################################################################
 
-### BGP 세션 설정
+## BGP 세션 설정
 
 
-### Tunnel 1a
+## Tunnel 1a
 resource "google_compute_router_interface" "tunnel1a_interface" {
   provider = google.gcp
   name       = "interface-1a"
   router     = google_compute_router.router.name
-  region     = "asia-northeast3"
+  region     = "us-central1"
   ip_range   = "169.254.10.2/30"
   vpn_tunnel = google_compute_vpn_tunnel.tunnel1a.name
 }
@@ -259,19 +248,19 @@ resource "google_compute_router_peer" "tunnel1a_peer" {
   provider = google.gcp
   name                      = "peer-1a"
   router                    = google_compute_router.router.name
-  region                    = "asia-northeast3"
+  region                    = "us-central1"
   interface                 = google_compute_router_interface.tunnel1a_interface.name
   peer_ip_address           = "169.254.10.1"
   peer_asn                  = 64512
   advertised_route_priority = 100
 }
 
-### Tunnel 1b
+## Tunnel 1b
 resource "google_compute_router_interface" "tunnel1b_interface" {
   provider = google.gcp
   name       = "interface-1b"
   router     = google_compute_router.router.name
-  region     = "asia-northeast3"
+  region     = "us-central1"
   ip_range   = "169.254.10.6/30"
   vpn_tunnel = google_compute_vpn_tunnel.tunnel1b.name
 }
@@ -280,19 +269,19 @@ resource "google_compute_router_peer" "tunnel1b_peer" {
   provider = google.gcp
   name                      = "peer-1b"
   router                    = google_compute_router.router.name
-  region                    = "asia-northeast3"
+  region                    = "us-central1"
   interface                 = google_compute_router_interface.tunnel1b_interface.name
   peer_ip_address           = "169.254.10.5"
   peer_asn                  = 64512
   advertised_route_priority = 100
 }
 
-### Tunnel 2a
+## Tunnel 2a
 resource "google_compute_router_interface" "tunnel2a_interface" {
   provider = google.gcp
   name       = "interface-2a"
   router     = google_compute_router.router.name
-  region     = "asia-northeast3"
+  region     = "us-central1"
   ip_range   = "169.254.11.2/30"
   vpn_tunnel = google_compute_vpn_tunnel.tunnel2a.name
 }
@@ -301,19 +290,19 @@ resource "google_compute_router_peer" "tunnel2a_peer" {
   provider = google.gcp
   name                      = "peer-2a"
   router                    = google_compute_router.router.name
-  region                    = "asia-northeast3"
+  region                    = "us-central1"
   interface                 = google_compute_router_interface.tunnel2a_interface.name
   peer_ip_address           = "169.254.11.1"
   peer_asn                  = 64512
   advertised_route_priority = 100
 }
 
-### Tunnel 2b
+## Tunnel 2b
 resource "google_compute_router_interface" "tunnel2b_interface" {
   provider = google.gcp
   name       = "interface-2b"
   router     = google_compute_router.router.name
-  region     = "asia-northeast3"
+  region     = "us-central1"
   ip_range   = "169.254.11.6/30"
   vpn_tunnel = google_compute_vpn_tunnel.tunnel2b.name
 }
@@ -322,7 +311,7 @@ resource "google_compute_router_peer" "tunnel2b_peer" {
   provider = google.gcp
   name                      = "peer-2b"
   router                    = google_compute_router.router.name
-  region                    = "asia-northeast3"
+  region                    = "us-central1"
   interface                 = google_compute_router_interface.tunnel2b_interface.name
   peer_ip_address           = "169.254.11.5"
   peer_asn                  = 64512

@@ -58,7 +58,7 @@ resource "aws_instance" "bastion" {
   associate_public_ip_address = true
   iam_instance_profile = aws_iam_instance_profile.bastion_instance_profile.name # 이 줄 추가
   key_name                    = "team4-key" # 실제 EC2 키페어 이름으로 교체
-  depends_on = [aws_db_instance.mydb]
+  # depends_on = [aws_db_instance.mydb]
   
   metadata_options {
     http_tokens = "optional"
@@ -73,7 +73,7 @@ resource "aws_instance" "bastion" {
       ROLE_NAME = var.role_name
       AWS_REGION = var.aws_region
       PROFILE_NAME  = var.profile_name
-      rds_endpoint = aws_db_instance.mydb.endpoint
+      # rds_endpoint = aws_db_instance.mydb.endpoint
       db_password  = var.db_password
     }
   )

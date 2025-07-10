@@ -4,6 +4,7 @@ module "vpc" {
 
   name = "ott-project-vpc"
   cidr = "10.0.0.0/16"
+  
 
   azs = ["ap-northeast-2a", "ap-northeast-2c"]
 
@@ -17,6 +18,7 @@ module "vpc" {
   enable_dns_support   = true
 
   tags = {
+    Name = "ott-project-vpc"
     Project     = "OTT"
     Environment = "Dev"
   }

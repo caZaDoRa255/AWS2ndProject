@@ -74,5 +74,20 @@ variable "iam_user_arn" {
   description = "ARN of the IAM user or role to grant access to the S3 bucket"
 }
 
+# GCP VPC 네트워크의 프라이빗 CIDR 블록 변수
+variable "gcp_vpc_private_cidr_block" {
+  description = "The private CIDR block of your GCP VPC where the VM is located. (e.g., '10.128.0.0/20')"
+  type        = string
+}
 
+variable "fastapi_secret_key" {
+  description = "Secret key for FastAPI backend and Lambda callback."
+  type        = string
+  sensitive   = true # 이 변수는 민감한 정보임을 표시 (출력 시 숨김)
+}
+
+variable "gcp_fastapi_private_ip" {
+  description = "GCP FastAPI VM의 프라이빗 IP 주소"
+  type        = string
+}
 

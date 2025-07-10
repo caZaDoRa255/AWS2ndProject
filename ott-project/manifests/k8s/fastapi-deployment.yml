@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fastapi-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fastapi
+  template:
+    metadata:
+      labels:
+        app: fastapi
+    spec:
+      containers:
+        - name: fastapi
+          image: registry.gitlab.com/43213422/ott-project:latest
+          envFrom:
+            - secretRef:
+                name: fastapi-env
+          ports:
+            - containerPort: 80
+      imagePullSecrets:
+        - name: harbor-regcred
