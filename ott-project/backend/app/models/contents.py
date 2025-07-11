@@ -1,6 +1,8 @@
 from pydantic import BaseModel, field_validator
-from sqlalchemy import Column, Integer, String, Optional, Field
+from sqlalchemy import Column, Integer, String
 from app.db.base import Base
+from typing import Optional
+from pydantic import Field
 
 # 운영자 콘텐츠 등록 후 반환하는 응답 모델
 class ContentResponse(BaseModel):
