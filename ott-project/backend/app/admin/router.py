@@ -13,7 +13,7 @@ from app.models.subscription import SubscriptionPlanCreate, SubscriptionPlanResp
 import boto3
 import os
 import logging
-
+import watchtower
 import uuid
 from pytube import YouTube
 from mimetypes import guess_type
@@ -38,22 +38,21 @@ s3_client = boto3.client(
 LAMBDA_CALLBACK_SECRET = os.getenv("SECRET_KEY")
 
 # ✅ 로그 설정 (클라우드와치)
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    filename="/var/log/myapp.log",  # CloudWatch가 수집할 경로
-    filemode="a" #filename= 으로 지정한 파일을 어떤 방식으로 열 것인지 지정,append (추가 모드),보통이걸씀
-)
+# 로거 생성
+# logger = logging.getLogger("admin-page")
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+# CloudWatch 핸들러 연결
+logger.addHandler(watchtower.CloudWatchLogHandler(
+    log_group='admin-log-group',
+    stream_name='admin-stream'
+))
 
 # __name__은 현재 모듈 이름 (예: admin.router)
 # 이걸 로거 이름으로 쓰면:
 # 로그 메시지의 출처를 식별할 수 있고
 # 나중에 파일별로 로그 필터링하거나 레벨 조정하기 쉬움
-
-# %(asctime)s	  로그 발생 시간 (예: 2025-06-27 22:12:45)
-# %(levelname)s	  로그 레벨 (INFO, ERROR, WARNING 등)
-# %(message)s	  네가 logger로 남기는 진짜 메시지 ("[스트리밍 실패] content_id=5..." 등)
 
 # 이미지 업로드용 Presigned URL 발급
 @router.post("/images/upload-url", response_model=ContentResponse)
