@@ -30,6 +30,11 @@ def lambda_handler(event, context):
 
     thumbnail_unique_id = s3_original_key.split('/')[-1].split('.')[0]
     s3_thumbnail_key = f"thumbnails/{thumbnail_unique_id}{file_extension}"
+
+    # 환경변수에서 CloudFront 도메인을 불러옴
+    CLOUDFRONT_DOMAIN = os.environ.get("CLOUDFRONT_DOMAIN")
+    # CloudFront URL
+    cloudfront_thumbnail_url = f"{CLOUDFRONT_DOMAIN}/{s3_thumbnail_key}"
     
     try:
         print("Downloading file from S3...")
@@ -60,10 +65,11 @@ def lambda_handler(event, context):
 
         callback_url = f"{FASTAPI_BACKEND_URL}/internal/assets/thumbnail_callback"
 
+        #  DB에 반영될 값
         payload = {
             "content_id": int(content_id_from_metadata), # FastAPI가 int로 받으므로 변환
-            "s3_original_key": s3_original_key,
-            "s3_thumbnail_key": s3_thumbnail_key,
+            # "s3_original_key": s3_original_key,
+            "thumbnail_url": cloudfront_thumbnail_url,
             "secret": LAMBDA_CALLBACK_SECRET # 보안을 위한 공유 시크릿 키
         }
 
