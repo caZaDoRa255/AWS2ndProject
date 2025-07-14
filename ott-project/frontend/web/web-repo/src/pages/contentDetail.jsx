@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import "../style/contentDetail.css";
@@ -8,16 +8,40 @@ function ContentDetail() {
   const [content, setContent] = useState(null);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
   const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
+    // Fetch content details
     fetch(`${apiUrl}/contents/${id}`)
-      .then(res => res.json())
-      .then(data => setContent(data))
-      .catch(err => console.error("불러오기 실패:", err));
+      .then((res) => res.json())
+      .then((data) => setContent(data))
+      .catch((err) => console.error("Content fetch failed:", err));
 
+    // Fetch comments
     fetchComments();
-  }, [id]);
+
+    // Fetch video URL
+    const fetchVideoUrl = async () => {
+      try {
+        const urlResponse = await fetch(`${apiUrl}/history/${id}/url`, {
+          method: 'GET',
+          credentials: "include"
+        });
+        if (!urlResponse.ok) throw new Error(`HTTP error! status: ${urlResponse.status}`);
+        const urlData = await urlResponse.json();
+        if (urlData.stream_url) {
+          setVideoUrl(urlData.stream_url);
+        } else {
+          throw new Error("No stream_url in response data");
+        }
+      } catch (error) {
+        console.error("Error fetching video URL:", error);
+      }
+    };
+
+    fetchVideoUrl();
+  }, [id, apiUrl]);
 
   const fetchComments = async () => {
     try {
@@ -34,10 +58,10 @@ function ContentDetail() {
     try {
       const res = await fetch(`${apiUrl}/favorites/${id}`, {
         method: "POST",
-        credentials: "include", // 쿠키 포함 (인증용)
+        credentials: "include",
         headers: {
-          "Content-Type": "application/json"
-        }
+          "Content-Type": "application/json",
+        },
       });
 
       if (!res.ok) {
@@ -88,32 +112,81 @@ function ContentDetail() {
   if (!content) return <div className="loading-text">로딩 중...</div>;
 
   return (
-    <div className="detail-page">
-      <h1>{content.title}</h1>
-      <p><strong>설명:</strong> {content.description}</p>
-      <p><strong>카테고리:</strong> {content.category}</p>
-      <p><strong>연도:</strong> {content.year}</p>
+    <div className="netflix-detail-page">
+      <div
+        className="hero-section"
+        style={{
+          backgroundImage: `url(${content.thumbnail_url || 'https://via.placeholder.com/1920x1080'})`,
+        }}
+      >
+        <div className="hero-content-grid">
+          <div className="hero-text">
+            <h1 className="hero-title">{content.title}</h1>
+            <p className="hero-description">{content.description}</p>
+            <div className="hero-buttons">
+              <Link to={`/stream/${id}`} className="play-button">
+                재생
+              </Link>
+              <button className="like-button" onClick={handleFavorite}>
+                ❤️ 찜하기
+              </button>
+            </div>
+          </div>
+          <div className="hero-video-container">
+            {videoUrl ? (
+              <video
+                src={videoUrl}
+                autoPlay
+                muted
+                loop
+                preload="metadata"
+                className="hero-video"
+              >
+                Your browser does not support the video tag.
+              </video>
+            ) : (
+              <div className="video-placeholder">Loading video...</div>
+            )}
+          </div>
+        </div>
+      </div>
 
-      <button className="like-button" onClick={handleFavorite}>
-        ❤️ 찜하기
-      </button>
+      <div className="content-info-section">
+        <div className="content-meta">
+          <span className="meta-tag">장르: {content.category}</span>
+          <span className="meta-tag">연도: {content.year}</span>
+        </div>
+      </div>
 
       <section className="comments-section">
         <h2>Comments</h2>
         <div className="comment-list">
           {comments.length > 0 ? (
             comments.map((comment) => (
-              <div 
-                key={comment.id} 
-                className={`comment-item ${comment.subscription_id === 2 ? 'premium' : comment.subscription_id === 3 ? 'vip' : ''}`}
+              <div
+                key={comment.id}
+                className={`comment-item ${
+                  comment.subscription_id === 2
+                    ? "premium"
+                    : comment.subscription_id === 3
+                    ? "vip"
+                    : ""
+                }`}
               >
                 <p className="comment-author">{comment.nickname}</p>
-                <p className="comment-date">{new Date(comment.date).toLocaleString()}</p>
+                {comment.subscription_id === 1 && <p className="subscription-badge basic">Basic User</p>}
+                {comment.subscription_id === 2 && <p className="subscription-badge standard">Standard User 🔥</p>}
+                {comment.subscription_id === 3 && <p className="subscription-badge premium-badge">Premium User 💎</p>}
+                <p className="comment-date">
+                  {new Date(comment.date).toLocaleString()}
+                </p>
                 <p className="comment-text">{comment.comment}</p>
               </div>
             ))
           ) : (
-            <p className="no-comments-message">아직 댓글이 없습니다. 첫 댓글을 남겨보세요!</p>
+            <p className="no-comments-message">
+              아직 댓글이 없습니다. 첫 댓글을 남겨보세요!
+            </p>
           )}
         </div>
         <form className="comment-form" onSubmit={handleCommentSubmit}>
