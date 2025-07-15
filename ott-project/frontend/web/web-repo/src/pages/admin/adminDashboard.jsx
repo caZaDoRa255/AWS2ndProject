@@ -19,6 +19,14 @@ const Dashboard = () => {
   // State for video upload
   const [uploadVideoId, setUploadVideoId] = useState("");
 
+  // State for image upload
+  const [imageId, setImageId] = useState("");
+  const [imageTitle, setImageTitle] = useState("");
+  const [imageDescription, setImageDescription] = useState("");
+  const [imageCategory, setImageCategory] = useState("");
+  const [imageYear, setImageYear] = useState("");
+  const [imageFile, setImageFile] = useState(null);
+
   const apiUrl = import.meta.env.VITE_API_URL;
 
   const handleContentSubmit = async () => {
@@ -150,6 +158,71 @@ const Dashboard = () => {
     }
   };
 
+  const handleImageUploadSubmit = async () => {
+    if (!imageId || !imageTitle || !imageDescription || !imageCategory || !imageYear || !imageFile) {
+      alert("모든 필드를 입력해주세요.");
+      return;
+    }
+
+    // The metadata is a single JSON object.
+    const metadata = {
+      id: parseInt(imageId),
+      title: imageTitle,
+      description: imageDescription,
+      category: imageCategory,
+      year: imageYear,
+    };
+
+    // We'll send the request as multipart/form-data.
+    const formData = new FormData();
+    // The Pydantic model is sent as a JSON string in a field named 'metadata'.
+    formData.append("metadata", JSON.stringify(metadata));
+    // The filename is sent as a separate form field.
+    formData.append("filename", imageFile.name);
+
+    try {
+      // First, get the presigned URL. The server expects multipart/form-data.
+      const presignedUrlResponse = await fetch(`${apiUrl}/admin/images/upload-url`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+
+      if (!presignedUrlResponse.ok) {
+        const error = await presignedUrlResponse.json();
+        throw new Error(error.detail || "Presigned URL 요청 실패");
+      }
+
+      const { url } = await presignedUrlResponse.json();
+      console.log("📦 presigned url:", url);
+
+      // Now, upload the file to the presigned URL.
+      const uploadResponse = await fetch(url, {
+        method: "PUT",
+        body: imageFile,
+        headers: { "Content-Type": imageFile.type },
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("S3에 파일 업로드 실패");
+      }
+
+      console.log("✅ 이미지 업로드 성공!");
+      alert("이미지 업로드 성공!");
+      setImageId("");
+      setImageTitle("");
+      setImageDescription("");
+      setImageCategory("");
+      setImageYear("");
+      setImageFile(null);
+      // Reset file input
+      document.querySelector('input[type="file"]').value = "";
+    } catch (err) {
+      console.error("❌ 오류:", err.message);
+      alert("이미지 업로드 실패: " + err.message);
+    }
+  };
+
 
   return (
     <div>
@@ -204,6 +277,35 @@ const Dashboard = () => {
         <input type="number" value={uploadVideoId} onChange={(e) => setUploadVideoId(e.target.value)} />
       </div>
       <button onClick={handleVideoUploadSubmit}>📤 영상 업로드</button>
+
+
+
+      <h2 style={{ marginTop: "40px" }}>🖼️ 이미지 업로드</h2>
+      <div>
+        <label>ID:</label>
+        <input type="number" value={imageId} onChange={(e) => setImageId(e.target.value)} />
+      </div>
+      <div>
+        <label>Title:</label>
+        <input type="text" value={imageTitle} onChange={(e) => setImageTitle(e.target.value)} />
+      </div>
+      <div>
+        <label>Description:</label>
+        <input type="text" value={imageDescription} onChange={(e) => setImageDescription(e.target.value)} />
+      </div>
+      <div>
+        <label>Category:</label>
+        <input type="text" value={imageCategory} onChange={(e) => setImageCategory(e.target.value)} />
+      </div>
+      <div>
+        <label>Year:</label>
+        <input type="text" value={imageYear} onChange={(e) => setImageYear(e.target.value)} />
+      </div>
+      <div>
+        <label>Filename:</label>
+        <input type="file" onChange={(e) => setImageFile(e.target.files[0])} />
+      </div>
+      <button onClick={handleImageUploadSubmit}>📤 이미지 업로드</button>
     </div>
   );
 };
