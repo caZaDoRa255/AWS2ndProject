@@ -35,7 +35,7 @@ def lambda_handler(event, context):
         # 이미지 처리
         print("Opening image...")
         with Image.open(download_path) as img:
-            img.thumbnail((200, 200))
+            img.thumbnail((350, 350))
             img.save(upload_path)
             image_format = img.format.lower()  # 'jpeg', 'png', etc.
 
