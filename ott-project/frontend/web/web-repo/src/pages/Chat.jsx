@@ -1,5 +1,31 @@
 import React, { useState, useEffect, useRef } from 'react';
-import '../style/Chat.css'; // Import the new CSS file
+import { Link } from 'react-router-dom';
+import '../style/Chat.css';
+
+// A new component to parse and render the message
+const MessageRenderer = ({ text }) => {
+  // Corrected regex to match <Link>{id}<\/Link>
+  const parts = text.split(/(<Link>\d+<\/Link>)/g);
+
+  return (
+    <div>
+      {parts.map((part, index) => {
+        // Corrected regex to match <Link>{id}<\/Link>
+        const match = part.match(/<Link>(\d+)<\/Link>/);
+        if (match) {
+          const id = match[1];
+          return (
+            <Link key={index} to={`/content/${id}`} className="chat-watch-link">
+              Watch
+            </Link>
+          );
+        }
+        // Render regular text, converting markdown-like newlines to <br>
+        return <span key={index} dangerouslySetInnerHTML={{ __html: part.replace(/\n/g, '<br>') }} />;
+      })}
+    </div>
+  );
+};
 
 function Chatbot() {
   const [message, setMessage] = useState('');
@@ -58,14 +84,6 @@ function Chatbot() {
     }
   };
 
-  const markdownToHtml = (text) => {
-    if (!text) return '';
-    let html = text;
-    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    html = html.replace(/\n/g, '<br>');
-    return html;
-  };
-
   return (
     <div className="chat-container-gemini">
       <header className="chat-header-gemini">
@@ -74,7 +92,7 @@ function Chatbot() {
       <div className="chat-messages-gemini">
         {chatHistory.map((msg, index) => (
           <div key={index} className={`message-gemini ${msg.type}-gemini`}>
-            <div dangerouslySetInnerHTML={{ __html: markdownToHtml(msg.text) }} />
+            {msg.type === 'model' ? <MessageRenderer text={msg.text} /> : msg.text}
           </div>
         ))}
         {isLoading && (

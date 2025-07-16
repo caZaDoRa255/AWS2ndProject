@@ -75,4 +75,5 @@ uritemplate==4.2.0
 urllib3==2.5.0
 uvicorn==0.34.3
 watchfiles==1.0.5
+watchtower==3.4.0
 websockets==15.0.1

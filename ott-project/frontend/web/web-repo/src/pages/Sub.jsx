@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "../style/Sub.css";
 
 const plans = [
     {
-      name: "광고형 스탠다드",
+      name: "베이직",
       resolution: "1080p (Full HD)",
       price: "₩7,000",
       devices: "TV, 컴퓨터, 스마트폰, 태블릿",
@@ -33,20 +34,44 @@ const plans = [
       streams: 4,
       downloads: 6,
       ads: "무광고",
-      chat: "무제한, 챗봇과 영화 같이 보기 가능"
+      chat: "무제한"
     },
   ];
   
   function Sub() {
     const [selected, setSelected] = useState(null);
+    const navigate = useNavigate();
+    const apiUrl = import.meta.env.VITE_API_URL;
   
     const handleSelect = (index) => {
       setSelected(index);
     };
   
-    const handleNext = () => {
-      if (selected === null) return alert("플랜을 선택하세요.");
-      alert(`'${plans[selected].name}' 플랜 선택됨`);
+    const handleNext = async () => {
+      if (selected === null) {
+        alert("플랜을 선택하세요.");
+        return;
+      }
+      
+      const plan_id = selected + 1;
+
+      try {
+        const response = await fetch(`${apiUrl}/subscribe/${plan_id}`, {
+            method: 'POST',
+            credentials: 'include',
+        });
+
+        if (response.ok) {
+            alert(`'${plans[selected].name}' 플랜 구독이 완료되었습니다.`);
+            navigate('/');
+        } else {
+            const errorData = await response.json();
+            alert(`구독에 실패했습니다: ${errorData.detail}`);
+        }
+      } catch (error) {
+        console.error('구독 요청 실패:', error);
+        alert('구독 중 오류가 발생했습니다.');
+      }
     };
   
     return (
