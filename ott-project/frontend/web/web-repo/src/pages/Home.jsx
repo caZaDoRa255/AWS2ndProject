@@ -16,23 +16,11 @@ function Home() {
       
       try {
         const res = await fetch(`${apiUrl}/contents/`);
-<<<<<<< HEAD
-        
-        if (res.ok) {
-          const data = await res.json();
-          console.log("✅ 콘텐츠 API 연결 성공!");
-          console.log("서버에서 받은 콘텐츠:", data);
-          setContents(data.slice(0, 5));
-        } else {
-          console.error("❌ 콘텐츠 API 연결 실패. 상태:", res.status);
-        }
-=======
         const data = await res.json();
         console.log("서버에서 받은 콘텐츠:", data);
         setContents(data);
->>>>>>> 2c2906687fcbe9775f70431de132b0f494eba836
       } catch (error) {
-        console.error("❌ 콘텐츠 불러오기 실패:", error);
+        console.error("콘텐츠 불러오기 실패:", error);
       }
     };
 
