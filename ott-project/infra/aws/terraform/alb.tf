@@ -226,9 +226,9 @@ resource "null_resource" "cleanup_existing_helm_release" {
 
 resource "helm_release" "alb_controller" {
   name       = "aws-load-balancer-controller"
-  namespace  = "kube-system"
   repository = "https://aws.github.io/eks-charts"
   chart      = "aws-load-balancer-controller"
+  namespace  = "kube-system"
   version    = "1.7.1"
 
   set = [
@@ -242,7 +242,7 @@ resource "helm_release" "alb_controller" {
     },
     {
       name  = "serviceAccount.name"
-      value = kubernetes_service_account.alb_controller.metadata[0].name
+      value = "aws-load-balancer-controller"
     },
     {
       name  = "region"
@@ -254,19 +254,10 @@ resource "helm_release" "alb_controller" {
     }
   ]
 
-  # Helm 릴리스가 완전히 삭제된 후에만 생성
-  depends_on = [null_resource.cleanup_existing_helm_release]
+  timeout = 600  # timeout을 10분으로 늘림
+  wait    = true
 
-  lifecycle {
-    # Terraform이 리소스를 재생성하지 않도록 함
-    ignore_changes = [
-      # Helm 차트의 내부 상태 변경은 무시
-      set,
-    ]
-    
-    # destroy 시 Helm 릴리스도 함께 삭제
-    create_before_destroy = false
-  }
+  depends_on = [aws_eks_cluster.ott_eks, aws_eks_node_group.ott_node_group, null_resource.cleanup_existing_helm_release]
 }
 
 # Terraform destroy 시 Helm 릴리스 정리
@@ -291,8 +282,27 @@ resource "null_resource" "cleanup_helm_on_destroy" {
         foreach ($release in $helmList) {
           if ($release.name -like "*aws-load-balancer-controller*") {
             Write-Host "Destroying Helm release: $($release.name)"
-            helm uninstall $release.name -n kube-system --timeout 5m
+            try {
+              helm uninstall $release.name -n kube-system --timeout 5m
+            } catch {
+              Write-Host "Warning: Failed to uninstall $($release.name): $_"
+            }
           }
+        }
+        
+        # 관련 시크릿들도 정리
+        try {
+          $secrets = kubectl get secrets -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller --output json | ConvertFrom-Json
+          foreach ($secret in $secrets.items) {
+            Write-Host "Cleaning up secret: $($secret.metadata.name)"
+            try {
+              kubectl delete secret $secret.metadata.name -n kube-system --ignore-not-found=true
+            } catch {
+              Write-Host "Warning: Failed to delete secret $($secret.metadata.name): $_"
+            }
+          }
+        } catch {
+          Write-Host "Warning: Error during secret cleanup: $_"
         }
       } catch {
         Write-Host "Error during Helm cleanup: $_"

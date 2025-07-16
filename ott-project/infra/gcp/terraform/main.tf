@@ -15,6 +15,27 @@ provider "google-beta" {
 # Google 클라이언트 설정 (Helm provider용)
 data "google_client_config" "default" {}
 
+# GKE 클러스터 생성 후 kubectl 인증 설정
+resource "null_resource" "configure_kubectl" {
+  depends_on = [google_container_cluster.gke, google_container_node_pool.primary_nodes]
+
+  triggers = {
+    cluster_endpoint = google_container_cluster.gke.endpoint
+  }
+
+  provisioner "local-exec" {
+    command = "gcloud container clusters get-credentials ${var.gke_cluster_name} --region ${var.gke_location} --project ${var.project_id}"
+  }
+}
+
+# Kubernetes provider 설정 (GKE 클러스터 생성 후)
+provider "kubernetes" {
+  alias = "gke"
+  host  = "https://${google_container_cluster.gke.endpoint}"
+  cluster_ca_certificate = base64decode(google_container_cluster.gke.master_auth[0].cluster_ca_certificate)
+  token = data.google_client_config.default.access_token
+}
+
 # -----------------------------------
 # 프로젝트 번호 가져오기 (Cloud Build 서비스 계정 이메일 구성용)
 # # -----------------------------------
@@ -350,10 +371,19 @@ resource "google_sql_database_instance" "mysql_instance" {
     ip_configuration {
       private_network = google_compute_network.vpc_network.id
       ipv4_enabled = false
-      authorized_networks {
-        name  = "allow-all"
-        value = "0.0.0.0/0"
-      }
+      # authorized_networks {
+      #   name  = "allow-all"
+      #   value = "0.0.0.0/0"
+      # }
+    }
+    #자동 백업
+    backup_configuration {
+      enabled            = true
+      start_time         = "03:00"
+      location           = "us" # 백업 저장 위치 (리전위치 작성)
+      binary_log_enabled = true # MySQL PITR 활성화
+      #예: 실수로 오늘 11:34에 데이터를 삭제했다면, 11:33으로 되돌리기 가능!
+      transaction_log_retention_days = 7   # 트랜잭션 로그 보관일수
     }
   }
 

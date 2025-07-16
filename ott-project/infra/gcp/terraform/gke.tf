@@ -26,6 +26,13 @@ resource "google_container_cluster" "gke" {
 
   # 클러스터 설정
   enable_legacy_abac = false
+
+  # GCE Ingress Controller(HTTP Load Balancing) 활성화
+  addons_config {
+    http_load_balancing {
+      disabled = false
+    }
+  }
 }
 
 resource "google_container_node_pool" "primary_nodes" {
@@ -44,23 +51,12 @@ resource "google_container_node_pool" "primary_nodes" {
       "https://www.googleapis.com/auth/devstorage.read_only",
       "https://www.googleapis.com/auth/compute",
     ]
-    
     # 기본 서비스 계정 사용
     service_account = "default"
   }
 }
 
-resource "null_resource" "get_gke_credentials" {
-  depends_on = [google_container_cluster.gke, google_container_node_pool.primary_nodes]
 
-  triggers = {
-    always_run = timestamp()
-  }
-
-  provisioner "local-exec" {
-    command = "gcloud container clusters get-credentials ${var.gke_cluster_name} --region ${var.gke_location} --project ${var.project_id}"
-  }
-}
 
 
 

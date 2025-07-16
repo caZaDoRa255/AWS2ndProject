@@ -18,7 +18,6 @@ module "vpc" {
   enable_dns_support   = true
 
   tags = {
-    Name = "ott-project-vpc"
     Project     = "OTT"
     Environment = "Dev"
   }
@@ -34,10 +33,38 @@ module "vpc" {
   }
 }
 
+data "aws_route_tables" "private" {
+  vpc_id = module.vpc.vpc_id
+}
+
+# NAT Gateway 라우트가 이미 존재하는지 확인하고 없을 때만 생성
+resource "aws_route" "force_nat_gateway" {
+  count                  = length(data.aws_route_tables.private.ids)
+  route_table_id         = data.aws_route_tables.private.ids[count.index]
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = module.vpc.natgw_ids[0]
+  depends_on             = [module.vpc]
+  
+  # 라우트가 이미 존재하면 오류를 무시
+  lifecycle {
+    ignore_changes = [route_table_id]
+  }
+}
+
 #------------------------------------------------------
 #aws_route → VPC 라우팅 테이블 설정 (vpn2.tf에서 처리하므로 주석 처리)
 # resource "aws_route" "to_gcp" {
 #   route_table_id         = module.vpc.private_route_table_ids[0] 
 #   destination_cidr_block = var.gcp_private_subnet_cidr
+#   gateway_id             = aws_vpn_gateway.vgw.id
+# }
+
+# GCP VPC로 가는 라우트 추가 (VPN Gateway)
+# aws_vpn_gateway.vgw.id는 infra/multi/vpn2.tf에서 선언되어 있으므로, 실제 적용 시 output/input 구조로 받아와야 함
+# 아래 코드는 infra/aws/terraform에서 VPN Gateway를 직접 관리할 때만 정상 동작
+# resource "aws_route" "to_gcp_vpn" {
+#   count                  = length(module.vpc.private_route_table_ids)
+#   route_table_id         = module.vpc.private_route_table_ids[count.index]
+#   destination_cidr_block = var.gcp_vpc_private_cidr_block
 #   gateway_id             = aws_vpn_gateway.vgw.id
 # }

@@ -19,15 +19,20 @@ function App() {
   const apiUrl = import.meta.env.VITE_API_URL;
   useEffect(() => {
     const checkFastAPIConnection = async () => {
+      console.log('🔍 FastAPI 연결 확인 시작...');
+      console.log('API URL:', apiUrl);
+      
       try {
-        const response = await fetch(`${apiUrl}/`); // Assuming FastAPI runs on port 8000
+        const response = await fetch(`${apiUrl}/`);
         if (response.ok) {
-          console.log('Successfully connected to FastAPI endpoint!');
+          const data = await response.text();
+          console.log('✅ FastAPI 연결 성공!');
+          console.log('응답 데이터:', data);
         } else {
-          console.error('Failed to connect to FastAPI endpoint. Status:', response.status);
+          console.error('❌ FastAPI 연결 실패. 상태:', response.status);
         }
       } catch (error) {
-        console.error('Error connecting to FastAPI endpoint:', error);
+        console.error('❌ FastAPI 연결 오류:', error.message);
       }
     };
 

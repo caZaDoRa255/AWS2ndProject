@@ -1,4 +1,5 @@
 resource "kubernetes_deployment" "fastapi" {
+  provider = kubernetes.gke
   metadata {
     name = "fastapi-app"
     namespace = "default"
@@ -32,7 +33,7 @@ resource "kubernetes_deployment" "fastapi" {
           name  = "fastapi"
           image = var.fastapi_image
           port {
-            container_port = 8080
+            container_port = 8000
           }
 
           resources {
@@ -55,7 +56,7 @@ resource "kubernetes_deployment" "fastapi" {
       }
     }
   }
-  depends_on = [null_resource.get_gke_credentials]
+  depends_on = [null_resource.configure_kubectl]
 
   lifecycle {
     ignore_changes = [
@@ -68,6 +69,7 @@ resource "kubernetes_deployment" "fastapi" {
 }
 
 resource "kubernetes_service" "fastapi_service" {
+  provider = kubernetes.gke
   metadata {
     name = "fastapi-service"
     namespace = "default"
@@ -80,12 +82,12 @@ resource "kubernetes_service" "fastapi_service" {
 
     port {
       port        = 80
-      target_port = 8080
+      target_port = 8000
     }
 
     type = "LoadBalancer"
   }
-  depends_on = [null_resource.get_gke_credentials]
+  depends_on = [null_resource.configure_kubectl]
 
   lifecycle {
     ignore_changes = [
@@ -95,15 +97,22 @@ resource "kubernetes_service" "fastapi_service" {
   }
 }
 
+resource "google_compute_address" "fastapi_ingress_ip" {
+  name   = "fastapi-ingress-ip"
+  region = var.region
+}
+
 resource "kubernetes_ingress_v1" "fastapi_ingress" {
+  provider = kubernetes.gke
   metadata {
     name = "fastapi-ingress"
     namespace = "default"
     annotations = {
       "kubernetes.io/ingress.class" = "gce"
+      "networking.gke.io/managed-certificates" = "fastapi-cert"
+      "kubernetes.io/ingress.global-static-ip-name" = google_compute_address.fastapi_ingress_ip.name
     }
   }
-
   spec {
     rule {
       host = "api.moodlyharbor.click"
@@ -122,6 +131,29 @@ resource "kubernetes_ingress_v1" "fastapi_ingress" {
         }
       }
     }
+    tls {
+      hosts      = ["api.moodlyharbor.click"]
+    }
   }
-  depends_on = [null_resource.get_gke_credentials]
+  depends_on = [null_resource.configure_kubectl]
+}
+
+resource "null_resource" "apply_managed_cert" {
+  depends_on = [null_resource.configure_kubectl, kubernetes_ingress_v1.fastapi_ingress]
+  provisioner "local-exec" {
+    interpreter = ["PowerShell", "-Command"]
+    command = <<EOT
+$yaml = @"
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: fastapi-cert
+  namespace: default
+spec:
+  domains:
+    - api.moodlyharbor.click
+"@
+$yaml | kubectl apply -f -
+EOT
+  }
 }

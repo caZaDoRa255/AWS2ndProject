@@ -317,3 +317,18 @@ resource "google_compute_router_peer" "tunnel2b_peer" {
   peer_asn                  = 64512
   advertised_route_priority = 100
 }
+
+# private route table을 data source로 조회
+# (아래에 추가)
+data "aws_route_tables" "private" {
+  provider = aws.aws
+  vpc_id   = data.aws_vpc.ott_project.id
+}
+
+resource "aws_route" "to_gcp_vpn" {
+  count                  = length(data.aws_route_tables.private.ids)
+  route_table_id         = data.aws_route_tables.private.ids[count.index]
+  destination_cidr_block = "10.10.2.0/24" # 또는 var.gcp_vpc_private_cidr_block
+  gateway_id             = aws_vpn_gateway.vgw.id
+  provider               = aws.aws
+}

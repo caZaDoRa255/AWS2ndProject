@@ -13,6 +13,7 @@ locals {
 }
 
 resource "kubernetes_secret" "gitlab_registry_secret" {
+  provider = kubernetes.gke
   metadata {
     name      = "gitlab-regcred"
     namespace = "default"
@@ -24,6 +25,6 @@ resource "kubernetes_secret" "gitlab_registry_secret" {
     ".dockerconfigjson" = local.dockerconfigjson_content
   }
 
-  depends_on = [null_resource.get_gke_credentials]
+  depends_on = [null_resource.configure_kubectl]
 }
 

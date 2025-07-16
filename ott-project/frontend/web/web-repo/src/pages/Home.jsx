@@ -12,14 +12,22 @@ function Home() {
 
   useEffect(() => {
     const fetchContents = async () => {
+      console.log('🔍 콘텐츠 API 연결 확인...');
+      console.log('API URL:', apiUrl);
+      
       try {
         const res = await fetch(`${apiUrl}/contents/`);
         
-        const data = await res.json();
-        console.log("서버에서 받은 콘텐츠:", data); // 🔥 이 줄 추가
-        setContents(data.slice(0, 5));
+        if (res.ok) {
+          const data = await res.json();
+          console.log("✅ 콘텐츠 API 연결 성공!");
+          console.log("서버에서 받은 콘텐츠:", data);
+          setContents(data.slice(0, 5));
+        } else {
+          console.error("❌ 콘텐츠 API 연결 실패. 상태:", res.status);
+        }
       } catch (error) {
-        console.error("콘텐츠 불러오기 실패:", error);
+        console.error("❌ 콘텐츠 불러오기 실패:", error);
       }
     };
 

@@ -53,3 +53,7 @@ output "fastapi_backend_private_ip" {
   description = "The private IP address of the FastAPI backend VM."
   value       = var.gcp_fastapi_private_ip
 }
+
+output "cloudfront_domain_name" {
+  value = aws_cloudfront_distribution.cdn.domain_name
+}

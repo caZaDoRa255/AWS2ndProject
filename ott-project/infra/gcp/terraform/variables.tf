@@ -62,7 +62,7 @@ variable "gke_location" {
 }
 
 variable "gke_node_count" {
-  default = 1
+  default = 2
 }
 
 
@@ -171,7 +171,7 @@ variable "secret_key" {
 variable "database_url" {
   description = "데이터베이스 연결 URL"
   type        = string
-  default     = "sqlite:///./app.db"
+  default     = "mysql+pymysql://ott_admin:team4321@34.123.123.123:3306/app_db"
 }
 
 variable "aws_access_key_id" {
@@ -211,4 +211,9 @@ variable "frontend_origin" {
   description = "프론트엔드 Origin URL"
   type        = string
   default     = "http://frontend.moodlyharbor.link"
+}
+
+variable "cloudsql_private_ip_cidr" {
+  description = "Cloud SQL 인스턴스의 내부 IP 대역 (CIDR)"
+  type        = string
 }

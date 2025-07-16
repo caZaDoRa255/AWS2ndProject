@@ -52,7 +52,7 @@ resource "kubernetes_deployment" "react_app" {
           }
           env {
             name  = "VITE_API_URL"
-            value = "http://backend.moodlyharbor.link"
+            value = "https://api.moodlyharbor.click"
           }
           env {
             name  = "PORT"
@@ -97,7 +97,7 @@ resource "kubernetes_service" "react_app_service" {
 
 # React 앱을 위한 Ingress
 resource "kubernetes_ingress_v1" "react_ingress" {
-  depends_on = [null_resource.eks_ready]
+  depends_on = [null_resource.eks_ready, kubernetes_service.react_app_service]
   
   metadata {
     name = "react-ingress"
@@ -187,7 +187,7 @@ resource "null_resource" "deployment_status_check" {
       kubectl get svc -l app=react-app
       kubectl get ingress react-ingress
       echo "✅ React 앱 배포 완료!"
-      echo "🌐 접속 URL: http://frontend.moodlyharbor.link"
+      echo "🌐 접속 URL: https://frontend.moodlyharbor.link"
       echo "🔗 Load Balancer: $(kubectl get ingress react-ingress -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')"
     EOT
   }

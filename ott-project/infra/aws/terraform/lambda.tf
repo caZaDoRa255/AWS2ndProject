@@ -28,6 +28,7 @@ resource "aws_lambda_function" "thumbnail" {
       # URL 형태로 전달하기 위해 "http://" 접두사를 붙여줍니다.
       FASTAPI_BACKEND_URL  = "http://${var.gcp_fastapi_private_ip}"
       LAMBDA_CALLBACK_SECRET = var.fastapi_secret_key # Terraform 변수에서 가져옴
+      CLOUDFRONT_DOMAIN = "https://${aws_cloudfront_distribution.cdn.domain_name}" #추가된부분
     }
   }
 
@@ -116,10 +117,7 @@ resource "aws_iam_role_policy_attachment" "lambda_vpc_access" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
 
-# 수동 버킷을 Terraform에서 불러오기
-data "aws_s3_bucket" "image_storage" {
-  bucket = "image-storage-team4-ott-project"
-}
+# S3 버킷 데이터 소스는 cloudfront.tf에서 이미 정의됨
 
 # Lambda 권한 부여
 resource "aws_lambda_permission" "allow_s3" {

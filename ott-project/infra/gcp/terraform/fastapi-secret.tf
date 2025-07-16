@@ -1,4 +1,5 @@
 resource "kubernetes_secret" "fastapi_env" {
+  provider = kubernetes.gke
   metadata {
     name      = "fastapi-env"
     namespace = "default"
@@ -16,5 +17,5 @@ resource "kubernetes_secret" "fastapi_env" {
     FRONTEND_ORIGIN             = var.frontend_origin
   }
   type = "Opaque"
-  depends_on = [null_resource.get_gke_credentials]
+  depends_on = [null_resource.configure_kubectl]
 }
