@@ -116,3 +116,42 @@ resource "aws_iam_role" "EKSAdminRole" {
     ]
   })
 }
+
+resource "aws_iam_policy" "ecr_public_access_policy" {
+  name        = "AllowPublicECRAccess"
+  description = "Allow access to public ECR images"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "ecr-public:GetAuthorizationToken",
+          "ecr-public:BatchCheckLayerAvailability",
+          "ecr-public:GetRepositoryCatalogData",
+          "ecr-public:GetRepositoryPolicy",
+          "ecr-public:DescribeRepositories",
+          "ecr-public:DescribeImages",
+          "ecr-public:GetImage"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "attach_public_ecr_policy_to_node_role" {
+  role       = aws_iam_role.eks_node_role.name
+  policy_arn = aws_iam_policy.ecr_public_access_policy.arn
+}
+
+resource "aws_iam_role_policy_attachment" "eks_node_ecr_public_readonly" {
+  role       = aws_iam_role.eks_node_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonElasticContainerRegistryPublicReadOnly"
+}
+
+resource "aws_iam_role_policy_attachment" "eks_node_ecr_full" {
+  role       = aws_iam_role.eks_node_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"
+}

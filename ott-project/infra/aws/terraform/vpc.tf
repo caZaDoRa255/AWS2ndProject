@@ -68,3 +68,61 @@ resource "aws_route" "force_nat_gateway" {
 #   destination_cidr_block = var.gcp_vpc_private_cidr_block
 #   gateway_id             = aws_vpn_gateway.vgw.id
 # }
+
+# ECR VPC 엔드포인트 (EKS 노드가 ECR에서 이미지를 가져오기 위해 필요)
+resource "aws_vpc_endpoint" "ecr_api" {
+  vpc_id              = module.vpc.vpc_id
+  service_name        = "com.amazonaws.ap-northeast-2.ecr.api"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = module.vpc.private_subnets
+  security_group_ids  = [aws_security_group.vpc_endpoints_sg.id]
+  private_dns_enabled = true
+
+  tags = {
+    Name    = "ecr-api-endpoint"
+    Project = "OTT"
+  }
+}
+
+resource "aws_vpc_endpoint" "ecr_dkr" {
+  vpc_id              = module.vpc.vpc_id
+  service_name        = "com.amazonaws.ap-northeast-2.ecr.dkr"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = module.vpc.private_subnets
+  security_group_ids  = [aws_security_group.vpc_endpoints_sg.id]
+  private_dns_enabled = true
+
+  tags = {
+    Name    = "ecr-dkr-endpoint"
+    Project = "OTT"
+  }
+}
+
+# VPC 엔드포인트용 보안 그룹
+resource "aws_security_group" "vpc_endpoints_sg" {
+  name_prefix = "vpc-endpoints-sg"
+  description = "Security group for VPC endpoints"
+  vpc_id      = module.vpc.vpc_id
+
+  # HTTPS 트래픽 허용 (VPC 엔드포인트는 HTTPS만 사용)
+  ingress {
+    description = "HTTPS from VPC"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = [module.vpc.vpc_cidr_block]
+  }
+
+  # 모든 아웃바운드 트래픽 허용
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name    = "vpc-endpoints-sg"
+    Project = "OTT"
+  }
+}

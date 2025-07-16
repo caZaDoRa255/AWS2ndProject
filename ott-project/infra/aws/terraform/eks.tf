@@ -11,9 +11,14 @@ resource "aws_eks_cluster" "ott_eks" {
   ]
 }
 
+# 기존 SSH 키 페어 사용
+data "aws_key_pair" "eks_key" {
+  key_name = "team4-key"
+}
+
 resource "aws_eks_node_group" "ott_node_group" {
   cluster_name    = aws_eks_cluster.ott_eks.name
-  node_group_name = "ott-node-group"
+  node_group_name = "ott-node-group-v2"
   node_role_arn   = aws_iam_role.eks_node_role.arn
   subnet_ids      = module.vpc.private_subnets
 
@@ -25,6 +30,11 @@ resource "aws_eks_node_group" "ott_node_group" {
 
   instance_types = ["t3.medium"]
   disk_size      = 20
+
+  # SSH 키 페어 설정 (문제 해결을 위해 일시적으로 비활성화)
+  # remote_access {
+  #   ec2_ssh_key = data.aws_key_pair.eks_key.key_name
+  # }
 }
 
 data "aws_eks_cluster" "cluster" {
@@ -60,5 +70,43 @@ resource "aws_iam_role" "alb_controller" {
       }
     ]
   })
+}
+
+# EKS 노드용 보안 그룹
+resource "aws_security_group" "eks_nodes_sg" {
+  name_prefix = "eks-nodes-sg"
+  description = "Security group for EKS nodes"
+  vpc_id      = module.vpc.vpc_id
+
+  # SSH 접근 허용 (Bastion 호스트에서만)
+  ingress {
+    description     = "SSH from bastion"
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_security_group.bastion_sg.id]
+  }
+
+  # 노드 간 통신 허용
+  ingress {
+    description = "Node to node communication"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    self        = true
+  }
+
+  # 모든 아웃바운드 트래픽 허용
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name    = "eks-nodes-sg"
+    Project = "OTT"
+  }
 }
 
