@@ -36,7 +36,7 @@ resource "kubernetes_deployment" "react_app" {
           }
           env {
             name  = "VITE_API_URL"
-            value = "https://api.moodlyharbor.click"
+            value = "http://api.moodlyharbor.click"
           }
 
           env {

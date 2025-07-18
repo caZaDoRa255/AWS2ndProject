@@ -1,26 +1,41 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.auth.router import router as auth_router
 from app.contents.router import router as contents_router
 from app.favorites.router import router as favorites_router
-from app.stream.router import router as history_router
 from app.preferences.router import router as preferences_router
 from app.recommend.router import router as recommend_router
-from app.subscription.router import router as subscription_router
+from app.stream.router import router as stream_router
 from app.click.router import router as click_router
-from app.admin.router import router as admin_router
 from app.chatbot.router import router as chatbot_router
+from app.subscription.router import router as subscription_router
+from app.admin.router import router as admin_router
 
 app = FastAPI()
-app.include_router(auth_router)
-app.include_router(contents_router)
-app.include_router(favorites_router)
-app.include_router(history_router)
-app.include_router(preferences_router)
-app.include_router(recommend_router)
-app.include_router(subscription_router)
-app.include_router(click_router)
-app.include_router(admin_router)
-app.include_router(chatbot_router)
+
+# CORS 미들웨어 추가
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 프로덕션에서는 특정 도메인만 허용
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(auth_router, prefix="/auth", tags=["auth"])
+app.include_router(contents_router, prefix="/contents", tags=["contents"])
+app.include_router(favorites_router, prefix="/favorites", tags=["favorites"])
+app.include_router(preferences_router, prefix="/preferences", tags=["preferences"])
+app.include_router(recommend_router, prefix="/recommend", tags=["recommend"])
+app.include_router(stream_router, prefix="/stream", tags=["stream"])
+app.include_router(click_router, prefix="/click", tags=["click"])
+app.include_router(chatbot_router, prefix="/chatbot", tags=["chatbot"])
+app.include_router(subscription_router, prefix="/subscription", tags=["subscription"])
+app.include_router(admin_router, prefix="/admin", tags=["admin"])
+
+@app.get("/")
+async def root():
+    return {"message": "FastAPI 연결 성공"}
 
 # cd backend_vs
 # venv\Scripts\activate

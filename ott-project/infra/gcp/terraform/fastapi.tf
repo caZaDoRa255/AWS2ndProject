@@ -85,7 +85,7 @@ resource "kubernetes_service" "fastapi_service" {
       target_port = 8000
     }
 
-    type = "LoadBalancer"  # 외부 접근을 위해 LoadBalancer 유지
+    type = "LoadBalancer"
   }
   depends_on = [null_resource.configure_kubectl]
 
@@ -102,6 +102,7 @@ resource "google_compute_address" "fastapi_ingress_ip" {
   region = var.region
 }
 
+# 단일 HTTPS Ingress로 통합
 resource "kubernetes_ingress_v1" "fastapi_ingress" {
   provider = kubernetes.gke
   metadata {
@@ -111,7 +112,7 @@ resource "kubernetes_ingress_v1" "fastapi_ingress" {
       "kubernetes.io/ingress.class" = "gce"
       "networking.gke.io/managed-certificates" = "fastapi-cert"
       "kubernetes.io/ingress.global-static-ip-name" = google_compute_address.fastapi_ingress_ip.name
-      "kubernetes.io/ingress.allow-http" = "true"
+      "kubernetes.io/ingress.allow-http" = "true"  # HTTP 허용으로 변경
     }
   }
   spec {
@@ -133,7 +134,7 @@ resource "kubernetes_ingress_v1" "fastapi_ingress" {
       }
     }
     tls {
-      hosts      = ["api.moodlyharbor.click"]
+      hosts = ["api.moodlyharbor.click"]
     }
   }
   depends_on = [null_resource.configure_kubectl]

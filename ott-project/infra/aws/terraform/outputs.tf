@@ -56,7 +56,7 @@ output "react_alb_dns_name" {
 
 output "react_app_url" {
   description = "React 앱 접속 URL"
-  value       = "https://frontend.moodlyharbor.link"
+  value       = "http://frontend.moodlyharbor.link"
 }
 
 output "fastapi_backend_private_ip" {
