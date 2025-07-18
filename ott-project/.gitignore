@@ -6,7 +6,6 @@
 
 # Secrets & Keys
 *.pem
-.env
 secrets/
 terraform.tfvars
 *.tfvars

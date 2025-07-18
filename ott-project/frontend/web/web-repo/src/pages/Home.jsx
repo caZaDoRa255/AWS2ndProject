@@ -11,9 +11,6 @@ function Home() {
 
   useEffect(() => {
     const fetchContents = async () => {
-      console.log('🔍 콘텐츠 API 연결 확인...');
-      console.log('API URL:', apiUrl);
-      
       try {
         const res = await fetch(`${apiUrl}/contents/`);
         const data = await res.json();

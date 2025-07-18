@@ -7,7 +7,6 @@ __pycache__/
 *.tfvars
 terraform.tfvars
 *.bak
-.env
 .aws/
 *.json
 terraform.tfstate
