@@ -19,10 +19,7 @@ provider "aws" {
 # VPC ID를 직접 지정 (여러 VPC가 있을 때)
 data "aws_vpc" "ott_project" {
   provider = aws.aws
-  filter {
-    name   = "tag:Name"
-    values = ["ott-project-vpc"]
-  }
+  id = "vpc-0107377b3c9ed5272"  # AWS Terraform에서 사용 중인 VPC ID
 }
 
 

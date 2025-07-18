@@ -142,7 +142,7 @@ resource "google_compute_firewall" "allow_aws_lambda_to_fastapi" {
   # (만약 `google_compute_network` 리소스 이름이 "custom_vpc"라면, `google_compute_network.custom_vpc.self_link`가 맞습니다.)
   # 여기서는 `vpc_name` 변수를 통해 해당 네트워크 리소스를 참조하는 일반적인 방식을 사용하겠습니다.
 
-  network     = "projects/${var.project_id}/global/networks/${var.vpc_name}" # ✅ 당신의 GCP VPC 네트워크 이름 참조
+  network     = google_compute_network.vpc_network.name
 
   # ✅ 인바운드 (INGRESS) 규칙: AWS Lambda에서 들어오는 HTTP/HTTPS 트래픽 허용
   allow {

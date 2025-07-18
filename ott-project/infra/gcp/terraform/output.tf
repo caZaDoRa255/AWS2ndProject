@@ -22,3 +22,9 @@
 #   value       = google_firestore_database.database.type
 # }
 
+# FastAPI 서비스 외부 IP 출력
+output "fastapi_external_ip" {
+  description = "FastAPI 서비스의 외부 IP 주소"
+  value       = kubernetes_service.fastapi_service.status[0].load_balancer[0].ingress[0].ip
+}
+

@@ -1,23 +1,7 @@
 # AWS EKS에서 React 앱 배포 설정
 
-# EKS 클러스터 준비 확인
-resource "null_resource" "eks_ready" {
-  depends_on = [aws_eks_cluster.ott_eks, aws_eks_node_group.ott_node_group]
-
-  provisioner "local-exec" {
-    interpreter = ["cmd", "/c"]
-    command = "aws eks update-kubeconfig --region ap-northeast-2 --name ott-eks"
-  }
-
-  provisioner "local-exec" {
-    interpreter = ["cmd", "/c"]
-    command = "kubectl wait --for=condition=ready nodes --all --timeout=300s"
-  }
-}
-
 # React 앱을 위한 Kubernetes Deployment
 resource "kubernetes_deployment" "react_app" {
-  depends_on = [null_resource.eks_ready]
   
   metadata {
     name = "react-app"
@@ -46,7 +30,7 @@ resource "kubernetes_deployment" "react_app" {
       spec {
         container {
           name  = "react-app"
-          image = "huntress255/team4:beta"
+          image = "huntress255/team4:final"
           port {
             container_port = 80
           }
@@ -54,6 +38,12 @@ resource "kubernetes_deployment" "react_app" {
             name  = "VITE_API_URL"
             value = "https://api.moodlyharbor.click"
           }
+
+          env {
+            name = "VITE_CLOUDFRONT_URL"
+            value = "https://d3k2bgrec30w3r.cloudfront.net"
+          }
+
           env {
             name  = "PORT"
             value = "80"
@@ -76,7 +66,6 @@ resource "kubernetes_deployment" "react_app" {
 
 # React 앱을 위한 Kubernetes Service
 resource "kubernetes_service" "react_app_service" {
-  depends_on = [null_resource.eks_ready]
   
   metadata {
     name = "react-app-service"
@@ -97,7 +86,7 @@ resource "kubernetes_service" "react_app_service" {
 
 # React 앱을 위한 Ingress
 resource "kubernetes_ingress_v1" "react_ingress" {
-  depends_on = [null_resource.eks_ready, kubernetes_service.react_app_service]
+  depends_on = [kubernetes_service.react_app_service]
   
   metadata {
     name = "react-ingress"
@@ -106,7 +95,7 @@ resource "kubernetes_ingress_v1" "react_ingress" {
       "alb.ingress.kubernetes.io/scheme" = "internet-facing"
       "alb.ingress.kubernetes.io/target-type" = "ip"
       "alb.ingress.kubernetes.io/listen-ports" = "[{\"HTTP\": 80}, {\"HTTPS\":443}]"
-      "alb.ingress.kubernetes.io/certificate-arn" = var.certificate_arn
+      "alb.ingress.kubernetes.io/certificate-arn" = "arn:aws:acm:ap-northeast-2:646322278152:certificate/1a8c4cad-47cc-4da1-877a-4ac431f971e2"
       "alb.ingress.kubernetes.io/ssl-redirect" = "443"
     }
   }
@@ -150,6 +139,7 @@ resource "null_resource" "wait_for_ingress_address" {
     interpreter = ["cmd", "/c"]
     command = <<-EOT
       echo "⏳ Ingress Load Balancer 주소 대기 중..."
+      aws eks update-kubeconfig --region ap-northeast-2 --name ott-eks
       timeout 300 kubectl wait --for=condition=ready ingress/react-ingress --timeout=300s
       echo "✅ Ingress Load Balancer 준비 완료!"
     EOT
@@ -163,10 +153,10 @@ resource "null_resource" "wait_for_ingress_address" {
 #   zone_id = data.aws_route53_zone.link.zone_id
 #   name    = "frontend.moodlyharbor.link"
 #   type    = "A"
-#
+# 
 #   alias {
 #     name                   = data.kubernetes_ingress_v1.react_ingress_status.status[0].load_balancer[0].ingress[0].hostname
-#     zone_id                = "Z14GRHDCWA56QT"
+#     zone_id                = "ZWKZPGTI48KDX"
 #     evaluate_target_health = true
 #   }
 # }
@@ -183,6 +173,7 @@ resource "null_resource" "deployment_status_check" {
     interpreter = ["cmd", "/c"]
     command = <<-EOT
       echo "📊 React 앱 배포 상태 확인 중..."
+      aws eks update-kubeconfig --region ap-northeast-2 --name ott-eks
       kubectl get pods -l app=react-app
       kubectl get svc -l app=react-app
       kubectl get ingress react-ingress

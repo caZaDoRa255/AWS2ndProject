@@ -1,10 +1,12 @@
-output "eks_cluster_name" {
-  value = aws_eks_cluster.ott_eks.name
-}
+# EKS 관련 출력은 infra/eks/outputs.tf에서 관리됨
 
-output "node_group_name" {
-  value = aws_eks_node_group.ott_node_group.node_group_name
-}
+# output "eks_cluster_name" {
+#   value = aws_eks_cluster.ott_eks.name
+# }
+
+# output "node_group_name" {
+#   value = aws_eks_node_group.ott_node_group.node_group_name
+# }
 
 # output "rds_sg_id" {
 #   description = "ID of RDS MySQL Security Group"
@@ -15,8 +17,16 @@ output "vpc_id" {
   value = module.vpc.vpc_id
 }
 
+output "vpc_cidr_block" {
+  value = module.vpc.vpc_cidr_block
+}
+
 output "private_subnet_ids" {
   value = module.vpc.private_subnets
+}
+
+output "private_route_table_ids" {
+  value = module.vpc.private_route_table_ids
 }
 
 output "bastion_public_ip" {

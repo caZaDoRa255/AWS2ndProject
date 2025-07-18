@@ -18,3 +18,12 @@ resource "aws_route53_record" "backend" {
     evaluate_target_health = true
   }
 }
+
+# FastAPI용 Route53 레코드 추가
+resource "aws_route53_record" "fastapi" {
+  zone_id = data.aws_route53_zone.link.zone_id
+  name    = "api.moodlyharbor.click"
+  type    = "A"
+  ttl     = "300"
+  records = [var.gcp_fastapi_private_ip]  # GCP FastAPI LoadBalancer External IP
+}

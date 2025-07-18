@@ -33,23 +33,25 @@ module "vpc" {
   }
 }
 
-data "aws_route_tables" "private" {
-  vpc_id = module.vpc.vpc_id
-}
+# data "aws_route_tables" "private" {
+#   vpc_id = module.vpc.vpc_id
+# }
 
-# NAT Gateway 라우트가 이미 존재하는지 확인하고 없을 때만 생성
-resource "aws_route" "force_nat_gateway" {
-  count                  = length(data.aws_route_tables.private.ids)
-  route_table_id         = data.aws_route_tables.private.ids[count.index]
-  destination_cidr_block = "0.0.0.0/0"
-  nat_gateway_id         = module.vpc.natgw_ids[0]
-  depends_on             = [module.vpc]
+# NAT Gateway 라우트 - 조건부 생성
+# resource "aws_route" "force_nat_gateway" {
+#   count = length(data.aws_route_tables.private.ids)
   
-  # 라우트가 이미 존재하면 오류를 무시
-  lifecycle {
-    ignore_changes = [route_table_id]
-  }
-}
+#   route_table_id         = data.aws_route_tables.private.ids[count.index]
+#   destination_cidr_block = "0.0.0.0/0"
+#   nat_gateway_id         = module.vpc.natgw_ids[0]
+  
+#   depends_on = [module.vpc]
+  
+#   # 라우트가 이미 존재하면 무시
+#   lifecycle {
+#     ignore_changes = [route_table_id, destination_cidr_block]
+#   }
+# }
 
 #------------------------------------------------------
 #aws_route → VPC 라우팅 테이블 설정 (vpn2.tf에서 처리하므로 주석 처리)
@@ -70,33 +72,33 @@ resource "aws_route" "force_nat_gateway" {
 # }
 
 # ECR VPC 엔드포인트 (EKS 노드가 ECR에서 이미지를 가져오기 위해 필요)
-resource "aws_vpc_endpoint" "ecr_api" {
-  vpc_id              = module.vpc.vpc_id
-  service_name        = "com.amazonaws.ap-northeast-2.ecr.api"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = module.vpc.private_subnets
-  security_group_ids  = [aws_security_group.vpc_endpoints_sg.id]
-  private_dns_enabled = true
+# resource "aws_vpc_endpoint" "ecr_api" {
+#   vpc_id              = module.vpc.vpc_id
+#   service_name        = "com.amazonaws.ap-northeast-2.ecr.api"
+#   vpc_endpoint_type   = "Interface"
+#   subnet_ids          = module.vpc.private_subnets
+#   security_group_ids  = [aws_security_group.vpc_endpoints_sg.id]
+#   private_dns_enabled = true
 
-  tags = {
-    Name    = "ecr-api-endpoint"
-    Project = "OTT"
-  }
-}
+#   tags = {
+#     Name    = "ecr-api-endpoint"
+#     Project = "OTT"
+#   }
+# }
 
-resource "aws_vpc_endpoint" "ecr_dkr" {
-  vpc_id              = module.vpc.vpc_id
-  service_name        = "com.amazonaws.ap-northeast-2.ecr.dkr"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = module.vpc.private_subnets
-  security_group_ids  = [aws_security_group.vpc_endpoints_sg.id]
-  private_dns_enabled = true
+# resource "aws_vpc_endpoint" "ecr_dkr" {
+#   vpc_id              = module.vpc.vpc_id
+#   service_name        = "com.amazonaws.ap-northeast-2.ecr.dkr"
+#   vpc_endpoint_type   = "Interface"
+#   subnet_ids          = module.vpc.private_subnets
+#   security_group_ids  = [aws_security_group.vpc_endpoints_sg.id]
+#   private_dns_enabled = true
 
-  tags = {
-    Name    = "ecr-dkr-endpoint"
-    Project = "OTT"
-  }
-}
+#   tags = {
+#     Name    = "ecr-dkr-endpoint"
+#     Project = "OTT"
+#   }
+# }
 
 # VPC 엔드포인트용 보안 그룹
 resource "aws_security_group" "vpc_endpoints_sg" {

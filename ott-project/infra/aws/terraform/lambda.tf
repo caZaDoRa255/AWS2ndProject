@@ -143,31 +143,31 @@ resource "aws_s3_bucket_notification" "lambda_trigger" {
 }
 
 #엔드포인트 
-resource "aws_vpc_endpoint" "s3" {
-  vpc_id            = module.vpc.vpc_id
-  service_name      = "com.amazonaws.${var.aws_region}.s3" 
-  vpc_endpoint_type = "Gateway"
-  route_table_ids   = module.vpc.private_route_table_ids  
+# resource "aws_vpc_endpoint" "s3" {
+#   vpc_id            = module.vpc.vpc_id
+#   service_name      = "com.amazonaws.${var.aws_region}.s3" 
+#   vpc_endpoint_type = "Gateway"
+#   route_table_ids   = module.vpc.private_route_table_ids  
 
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Principal = "*",
-        Action = "s3:*",
-        Resource = [
-          "arn:aws:s3:::image-storage-team4-ott-project",
-          "arn:aws:s3:::image-storage-team4-ott-project/*"
-        ]
-      }
-    ]
-  })
+#   policy = jsonencode({
+#     Version = "2012-10-17",
+#     Statement = [
+#       {
+#         Effect = "Allow",
+#         Principal = "*",
+#         Action = "s3:*",
+#         Resource = [
+#           "arn:aws:s3:::image-storage-team4-ott-project",
+#           "arn:aws:s3:::image-storage-team4-ott-project/*"
+#         ]
+#       }
+#     ]
+#   })
 
-  tags = {
-    Name = "s3-endpoint-image-only"
-  }
-}
+#   tags = {
+#     Name = "s3-endpoint-image-only"
+#   }
+# }
 
 
 # ✅ 람다 함수용 아웃바운드 보안 그룹
@@ -199,8 +199,8 @@ resource "aws_security_group" "lambda_outbound_sg" {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    prefix_list_ids = [aws_vpc_endpoint.s3.prefix_list_id]
-    description = "Allow traffic to S3 via VPC Endpoint"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow traffic to S3"
   }
 
   # 인바운드 규칙: 람다는 보통 다른 리소스가 람다에게 직접 접근할 필요가 없으므로 인바운드 규칙은 없거나 최소화합니다.

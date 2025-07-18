@@ -1,28 +1,27 @@
-# irsa.tf (수정 후)
-
+# ALB Controller용 IRSA 설정
 
 # 1. IAM Policy for AWS Load Balancer Controller
 resource "aws_iam_policy" "alb_controller_policy" {
-  name        = "AWSLoadBalancerControllerIAMPolicy-${var.eks_cluster_name}" # <-- 여기를 var.eks_cluster_name으로 변경
+  name        = "AWSLoadBalancerControllerIAMPolicy-${var.eks_cluster_name}"
   description = "IAM policy for AWS Load Balancer Controller to manage ALBs"
   policy      = file("iam_policy.json")
 }
 
 # 2. IAM Role for Service Account (IRSA)
 resource "aws_iam_role" "alb_controller_irsa_role" {
-  name               = "AmazonEKS_AWSLoadBalancerControllerRole-${var.eks_cluster_name}" # <-- 여기를 var.eks_cluster_name으로 변경
+  name               = "AmazonEKS_AWSLoadBalancerControllerRole-${var.eks_cluster_name}"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
         Effect = "Allow"
         Principal = {
-          Federated = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${replace(aws_eks_cluster.ott_eks.identity[0].oidc[0].issuer, "https://", "")}"
+          Federated = aws_iam_openid_connect_provider.eks.arn
         }
         Action = "sts:AssumeRoleWithWebIdentity"
         Condition = {
           StringEquals = {
-            "${replace(aws_eks_cluster.ott_eks.identity[0].oidc[0].issuer, "https://", "")}:sub" : "system:serviceaccount:kube-system:aws-load-balancer-controller"
+            "${replace(data.aws_eks_cluster.ott_eks.identity[0].oidc[0].issuer, "https://", "")}:sub" : "system:serviceaccount:kube-system:aws-load-balancer-controller"
           }
         }
       }
@@ -34,6 +33,23 @@ resource "aws_iam_role" "alb_controller_irsa_role" {
 resource "aws_iam_role_policy_attachment" "alb_controller_policy_attach" {
   policy_arn = aws_iam_policy.alb_controller_policy.arn
   role       = aws_iam_role.alb_controller_irsa_role.name
+}
+
+# 4. 추가 권한: EC2 Read 권한
+resource "aws_iam_role_policy_attachment" "alb_controller_ec2_read" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"
+  role       = aws_iam_role.alb_controller_irsa_role.name
+}
+
+# 5. Kubernetes ServiceAccount for ALB Controller
+resource "kubernetes_service_account" "aws_load_balancer_controller" {
+  metadata {
+    name      = "aws-load-balancer-controller"
+    namespace = "kube-system"
+    annotations = {
+      "eks.amazonaws.com/role-arn" = aws_iam_role.alb_controller_irsa_role.arn
+    }
+  }
 }
 
 

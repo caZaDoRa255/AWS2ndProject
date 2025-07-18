@@ -85,7 +85,7 @@ resource "kubernetes_service" "fastapi_service" {
       target_port = 8000
     }
 
-    type = "LoadBalancer"
+    type = "LoadBalancer"  # 외부 접근을 위해 LoadBalancer 유지
   }
   depends_on = [null_resource.configure_kubectl]
 
@@ -111,6 +111,7 @@ resource "kubernetes_ingress_v1" "fastapi_ingress" {
       "kubernetes.io/ingress.class" = "gce"
       "networking.gke.io/managed-certificates" = "fastapi-cert"
       "kubernetes.io/ingress.global-static-ip-name" = google_compute_address.fastapi_ingress_ip.name
+      "kubernetes.io/ingress.allow-http" = "true"
     }
   }
   spec {

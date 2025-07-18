@@ -2,6 +2,10 @@
 resource "aws_cloudwatch_log_group" "vpc_flow_log_group" {
   name              = "/aws/vpc-flow-logs/ott-project"
   retention_in_days = 7
+  
+  lifecycle {
+    ignore_changes = [name]
+  }
 }
 
 # IAM Role for VPC Flow Logs

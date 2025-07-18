@@ -64,7 +64,7 @@ resource "aws_instance" "bastion" {
     http_tokens = "optional"
   }
 
-  user_data = templatefile("${path.module}/user_data.sh.tpl",
+  user_data = templatefile("${path.module}/bastion_user_data.sh.tpl",
     {
       ACCESS_KEY = var.access_key
       SECRET_KEY = var.secret_key
