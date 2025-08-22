@@ -1,2 +1,2 @@
-# Ethereal
-웰컴 nightfarers
+# 2차 프로젝트
+웰컴 
